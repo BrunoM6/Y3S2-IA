@@ -108,12 +108,12 @@ def greedy_start():
 def get_saved_time(element, video):
     (endpoint, cache) = element
 
-data_center_latency = endpoint_data_description[int(endpoint)]
-cache_latency = endpoint_cache_description[element]
-
-request_number = request_description.get((f"{endpoint}", f"{video}"), 0)
-
-return (int(data_center_latency) - int(cache_latency)) * int(request_number)
+    data_center_latency = endpoint_data_description[int(endpoint)]
+    cache_latency = endpoint_cache_description[element]
+    
+    request_number = request_description.get((f"{endpoint}", f"{video}"), 0)
+    
+    return (int(data_center_latency) - int(cache_latency)) * int(request_number)
 
 def current_cap(cache, solution):
     return sum(video_size[int(v)] for v in solution[int(cache)])
