@@ -258,6 +258,6 @@ def tabu_search(initial_solution: dict, video_size: list, endpoint_data_descript
 
 
 
-problem_description, video_size, endpoint_data_description, endpoint_cache_description, request_description = parse_results('kittens.in.txt')
+problem_description, video_size, endpoint_data_description, endpoint_cache_description, request_description = parse_results('me_at_the_zoo.in')
 
 print(tabu_search(greedy_start(),video_size,endpoint_data_description,endpoint_cache_description,request_description,problem_description[4]))
