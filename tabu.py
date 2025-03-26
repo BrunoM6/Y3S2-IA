@@ -1,45 +1,9 @@
 import random
+import pygame
+from greedy import greedy_start
+from parse import parse_results
 
 
-def parse_results(file_name: str):
-    problem_description = []
-    video_size = []
-    endpoint_data_description = []
-    endpoint_cache_description = {}
-    request_description = {}
-    with open('data/' + file_name, 'r') as file:
-        line = file.readline()
-        tokens = line.strip().split()
-        for token in tokens:
-            problem_description.append(int(token))
-        line = file.readline()
-        tokens = line.strip().split()
-        for token in tokens:
-            video_size.append(int(token))
-        i = 0
-        while i != problem_description[1]:
-            line = file.readline()
-            tokens = line.strip().split()
-            endpoint_data_description.append(int(tokens[0]))
-            connections = int(tokens[1])
-            j = 0
-            while j < connections:
-                line = file.readline()
-                tokens = line.strip().split()
-                endpoint_cache_description[(int(i), int(tokens[0]))] = int(tokens[1])
-                j += 1
-            i += 1
-        i = 0
-        while i != problem_description[2]:
-            i+=1
-            line = file.readline()
-            tokens = line.strip().split()
-            key = (int(tokens[1]), int(tokens[0]))
-            if key in request_description:
-                request_description[key] += int(tokens[2])
-            else:
-                request_description[key] = int(tokens[2])
-    return problem_description, video_size, endpoint_data_description, endpoint_cache_description, request_description
 
 def score(solution: dict, endpoint_data_description: list, endpoint_cache_description: dict, request_description: dict) -> int:
     total_time_saved = 0
@@ -70,74 +34,7 @@ def score(solution: dict, endpoint_data_description: list, endpoint_cache_descri
     # Convert to microseconds and round down
     return total_time_saved * 1000 // total_requests
 
-
-def greedy_start():
-    # empty solution dictionary
-    solution = {cache: [] for cache in range(problem_description[3])}
-    cache_cap = problem_description[4]
-    scores = {}
-
-    # calculate scores
-    for (endpoint, video) in request_description.keys():
-        for element in endpoint_cache_description.keys():
-            if int(element[0]) == int(endpoint):
-                cache = element[1]
-                saved_time = get_saved_time(element, video)
-                #if exists
-                if (cache, video) in scores:
-                    scores[(cache,video)] += saved_time
-                #if not
-                else:
-                    scores[(cache, video)] = saved_time
-                    
-    scores = [(cache,video,saved_time) for (cache, video), saved_time in scores.items()]
-
-
-    # sort (video, cache, cost) by cost (desc)
-    scores.sort(key=lambda a: a[2], reverse=True)
-
-    # iterate through scores and fill caches
-    for (cache, video, sc) in scores:
-        curr_cap = current_cap(cache, solution)
-        if (curr_cap < cache_cap) and (video_size[int(video)] + curr_cap <= cache_cap) and (video not in solution[int(cache)]):
-            solution[int(cache)].append(video)
-
-    print("solution:\n")
-    print(solution)
-
-    # return greedy solution
-    return solution
-
-def get_saved_time(element, video):
-    (endpoint, cache) = element
-
-    data_center_latency = endpoint_data_description[int(endpoint)]
-    cache_latency = endpoint_cache_description[element]
-    
-    request_number = request_description.get((f"{endpoint}", f"{video}"), 0)
-    
-    return (int(data_center_latency) - int(cache_latency)) * int(request_number)
-
-def current_cap(cache, solution):
-    return sum(video_size[int(v)] for v in solution[int(cache)])
-
-def compute_benefit(video, cache, endpoint_data_description, endpoint_cache_description, request_description):
-    benefit = 0
-    for (endpoint, v), requests in request_description.items():
-        if int(v) != int(video):
-            continue
-        # Get the data center latency for this endpoint.
-        dc_latency = int(endpoint_data_description[int(endpoint)])
-        # Get the latency from this cache to the endpoint (or use dc_latency if not connected)
-        cache_latency = int(endpoint_cache_description.get((int(endpoint), int(cache)), dc_latency))
-        improvement = dc_latency - cache_latency
-        if improvement > 0:
-            benefit += improvement * int(requests)
-    return benefit
-
-def get_neighbors(state: dict, video_size: list,
-                  endpoint_data_description: list, endpoint_cache_description: dict,
-                  request_description: dict, cache_capacity: int):
+def get_neighbors(state: dict, video_size: list, endpoint_data_description: list, endpoint_cache_description: dict, request_description: dict, cache_capacity: int):
     neighbors = []
     cache_ids = list(state.keys())
     
@@ -162,23 +59,6 @@ def get_neighbors(state: dict, video_size: list,
                     if new_load_a > cache_capacity or new_load_b > cache_capacity:
                         continue  # Skip swaps that violate capacity
                     
-                    # Compute the heuristic benefit for each video in its current cache
-                    # and in the swapped cache.
-                    benefit_a_in_a = compute_benefit(video_a, cache_a, endpoint_data_description,
-                                                      endpoint_cache_description, request_description)
-                    benefit_a_in_b = compute_benefit(video_a, cache_b, endpoint_data_description,
-                                                      endpoint_cache_description, request_description)
-                    benefit_b_in_b = compute_benefit(video_b, cache_b, endpoint_data_description,
-                                                      endpoint_cache_description, request_description)
-                    benefit_b_in_a = compute_benefit(video_b, cache_a, endpoint_data_description,
-                                                      endpoint_cache_description, request_description)
-                    
-                    # Calculate the net benefit delta of swapping:
-                    # (benefit of video_b in cache_a + benefit of video_a in cache_b)
-                    # minus (benefit of video_a in cache_a + benefit of video_b in cache_b)
-                    delta = (benefit_b_in_a + benefit_a_in_b) - (benefit_a_in_a + benefit_b_in_b)
-                    
-                    # Only consider promising swaps (delta > 0).
                     # Instead of a full deep copy, copy only the affected caches.
                     new_state = state.copy()  # shallow copy of the dictionary
                     new_state[cache_a] = state[cache_a].copy()
@@ -192,6 +72,9 @@ def get_neighbors(state: dict, video_size: list,
                     neighbors.append(new_state)
                         
     return neighbors
+
+# def get_neighbors_all():
+#     neighbo
 
 
 def state_to_key(state: dict) -> frozenset:
@@ -255,11 +138,8 @@ def tabu_search(initial_solution: dict, video_size: list, endpoint_data_descript
             if candidate_list:
                 best, best_score = random.choice(candidate_list)
             iterations_without_improvement += 1  # Increment stagnation counter
+    print(best_score)
     return best
 
-
-
-
 problem_description, video_size, endpoint_data_description, endpoint_cache_description, request_description = parse_results('me_at_the_zoo.in')
-
 print(tabu_search(greedy_start(),video_size,endpoint_data_description,endpoint_cache_description,request_description,problem_description[4]))
