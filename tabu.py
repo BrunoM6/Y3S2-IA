@@ -26,7 +26,7 @@ def parse_results(file_name: str):
             while j < connections:
                 line = file.readline()
                 tokens = line.strip().split()
-                endpoint_cache_description[(i, tokens[0])] = tokens[1]
+                endpoint_cache_description[(int(i), int(tokens[0]))] = int(tokens[1])
                 j += 1
             i += 1
         i = 0
@@ -34,14 +34,14 @@ def parse_results(file_name: str):
             i+=1
             line = file.readline()
             tokens = line.strip().split()
-            key = (tokens[1], tokens[0])
+            key = (int(tokens[1]), int(tokens[0]))
             if key in request_description:
-                request_description[key] += tokens[2]
+                request_description[key] += int(tokens[2])
             else:
-                request_description[key] = tokens[2]
+                request_description[key] = int(tokens[2])
     return problem_description, video_size, endpoint_data_description, endpoint_cache_description, request_description
 
-def score(problem_state: dict, endpoint_data_description: list, endpoint_cache_description: dict, request_description: dict) -> int:
+def score(solution: dict, endpoint_data_description: list, endpoint_cache_description: dict, request_description: dict) -> int:
     total_time_saved = 0
     total_requests = 0
 
@@ -52,10 +52,14 @@ def score(problem_state: dict, endpoint_data_description: list, endpoint_cache_d
         data_center_latency = int(endpoint_data_description[int(endpoint)])
         best_latency = data_center_latency
 
-        for cache, videos in problem_state.items():
-            if video in videos:
-                cache_latency = int(endpoint_cache_description.get((int(endpoint), int(cache)), data_center_latency))
-                best_latency = min(best_latency, cache_latency)
+        # Consider only caches connected to this endpoint
+        for cache, cache_latency in endpoint_cache_description.items():
+            if int(cache[0]) == int(endpoint):  # Check if this cache is linked to the endpoint
+                cache_id = cache[1]
+                if video in solution[int(cache_id)]:  # Ensure `video` is a string
+                    # print(best_latency,int(cache_latency))
+                    best_latency = min(best_latency, int(cache_latency))
+                    # print(best_latency)
 
         time_saved = (data_center_latency - best_latency) * request_number
         total_time_saved += time_saved
@@ -63,9 +67,8 @@ def score(problem_state: dict, endpoint_data_description: list, endpoint_cache_d
     if total_requests == 0:
         return 0  # Avoid division by zero
 
-    average_time_saved_per_request = total_time_saved / total_requests
-    score_in_microseconds = int(average_time_saved_per_request * 1000)  # Convert to microseconds and round down
-    return score_in_microseconds
+    # Convert to microseconds and round down
+    return total_time_saved * 1000 // total_requests
 
 
 def greedy_start():
@@ -176,18 +179,17 @@ def get_neighbors(state: dict, video_size: list,
                     delta = (benefit_b_in_a + benefit_a_in_b) - (benefit_a_in_a + benefit_b_in_b)
                     
                     # Only consider promising swaps (delta > 0).
-                    if delta > 0:
-                        # Instead of a full deep copy, copy only the affected caches.
-                        new_state = state.copy()  # shallow copy of the dictionary
-                        new_state[cache_a] = state[cache_a].copy()
-                        new_state[cache_b] = state[cache_b].copy()
-                        
-                        new_state[cache_a].remove(video_a)
-                        new_state[cache_b].remove(video_b)
-                        new_state[cache_a].append(video_b)
-                        new_state[cache_b].append(video_a)
-                        
-                        neighbors.append(new_state)
+                    # Instead of a full deep copy, copy only the affected caches.
+                    new_state = state.copy()  # shallow copy of the dictionary
+                    new_state[cache_a] = state[cache_a].copy()
+                    new_state[cache_b] = state[cache_b].copy()
+                    
+                    new_state[cache_a].remove(video_a)
+                    new_state[cache_b].remove(video_b)
+                    new_state[cache_a].append(video_b)
+                    new_state[cache_b].append(video_a)
+                    
+                    neighbors.append(new_state)
                         
     return neighbors
 
@@ -200,6 +202,7 @@ def tabu_search(initial_solution: dict, video_size: list, endpoint_data_descript
     tabu = {}  # Tabu dictionary (stores states and their remaining forbidden tenure)
     best = initial_solution
     best_score = score(initial_solution, endpoint_data_description, endpoint_cache_description, request_description)
+    print(best_score)
     
     iterations_without_improvement = 0  # Track stagnation
     iteration = 0  # Count iterations
@@ -252,7 +255,6 @@ def tabu_search(initial_solution: dict, video_size: list, endpoint_data_descript
             if candidate_list:
                 best, best_score = random.choice(candidate_list)
             iterations_without_improvement += 1  # Increment stagnation counter
-        
     return best
 
 
