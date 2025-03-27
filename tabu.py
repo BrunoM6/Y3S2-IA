@@ -1,37 +1,13 @@
 import random
-from greedy import greedy_start
+import os
+import csv
+import json
 from parse import parse_results
+from get_solutions import get_init_solution
+from score_functions import score
 
 
 
-def score(solution: dict, endpoint_data_description: list, endpoint_cache_description: dict, request_description: dict) -> int:
-    total_time_saved = 0
-    total_requests = 0
-
-    for (endpoint, video), request_number in request_description.items():
-        request_number = int(request_number)
-        total_requests += request_number
-
-        data_center_latency = int(endpoint_data_description[int(endpoint)])
-        best_latency = data_center_latency
-
-        # Consider only caches connected to this endpoint
-        for cache, cache_latency in endpoint_cache_description.items():
-            if int(cache[0]) == int(endpoint):  # Check if this cache is linked to the endpoint
-                cache_id = cache[1]
-                if video in solution[int(cache_id)]:  # Ensure `video` is a string
-                    # print(best_latency,int(cache_latency))
-                    best_latency = min(best_latency, int(cache_latency))
-                    # print(best_latency)
-
-        time_saved = (data_center_latency - best_latency) * request_number
-        total_time_saved += time_saved
-
-    if total_requests == 0:
-        return 0  # Avoid division by zero
-
-    # Convert to microseconds and round down
-    return total_time_saved * 1000 // total_requests
 
 def get_neighbors(state: dict, video_size: list, cache_capacity: int):
     neighbors = []
@@ -72,7 +48,7 @@ def get_neighbors(state: dict, video_size: list, cache_capacity: int):
                         
     return neighbors
 
-def get_neighbors_all(state: dict, video_size: list, cache_capacity: int, max_neighbors: int = 200):
+def get_neighbors_all(state: dict, video_size: list, cache_capacity: int, max_neighbors: int = 500):
     neighbors = []
     cache_ids = list(state.keys())
     all_videos = set(range(len(video_size)))  # All video IDs (assuming videos are indexed from 0)
@@ -136,65 +112,96 @@ def get_neighbors_all(state: dict, video_size: list, cache_capacity: int, max_ne
 def state_to_key(state: dict) -> frozenset:
     return frozenset((cache, frozenset(videos)) for cache, videos in state.items())
 
-def tabu_search(initial_solution: dict, video_size: list, endpoint_data_description: list, endpoint_cache_description: dict, request_description: dict, cache_capacity: int, max_iterations=1000, tabu_tenure=8):
-
+def tabu_search(initial_solution: dict, video_size: list, endpoint_data_description: list, 
+                 endpoint_cache_description: dict, request_description: dict, cache_capacity: int, 
+                 max_iterations=1000, tabu_tenure=8):
+    
+    global file
+    os.makedirs(folder_path, exist_ok=True)
+    os.makedirs(folder_path_scores,exist_ok=True)
+    
     tabu = {}  # Tabu dictionary (stores states and their remaining forbidden tenure)
     best = initial_solution
     best_score = score(initial_solution, endpoint_data_description, endpoint_cache_description, request_description)
-    print(best_score)
+    solution_id = ""
     
     iterations_without_improvement = 0  # Track stagnation
     iteration = 0  # Count iterations
     
-    while iteration < max_iterations and iterations_without_improvement < 500:  # Prevent infinite loops
-        iteration += 1
-
-        # **Decrease tabu tenure and remove expired entries**
-        tabu = {k: v - 1 for k, v in tabu.items() if v > 1}
-
-        candidate_list = []  # Stores all valid neighbors
-        best_candidate = None
-        best_candidate_score = float('-inf')
-        aspiration_candidate = None
-        aspiration_score = float('-inf')
+    with open(os.path.join(folder_path, "tabu_search_results.csv"), "a", newline="") as csvfile:
+        csv_writer = csv.writer(csvfile)
+        csv_writer.writerow(["algorithm", "solution_id", "score"])
         
-        # **Step 1: Generate all neighbors**
-        for neighbor in get_neighbors_all(best, video_size,  cache_capacity):
-            neighbor_score = score(neighbor, endpoint_data_description, endpoint_cache_description, request_description)
-            candidate_list.append((neighbor, neighbor_score))
-        
-        # **Step 2: Choose the best candidate**
-        for candidate, candidate_score in candidate_list:
-            candidate_key = state_to_key(candidate)
+        while iteration < max_iterations and iterations_without_improvement < 500:  # Prevent infinite loops
+            iteration += 1
 
-            if candidate_key not in tabu:
-                if candidate_score > best_candidate_score:
-                    best_candidate = candidate
-                    best_candidate_score = candidate_score
+            # **Decrease tabu tenure and remove expired entries**
+            tabu = {k: v - 1 for k, v in tabu.items() if v > 1}
+
+            candidate_list = []  # Stores all valid neighbors
+            best_candidate = None
+            best_candidate_score = float('-inf')
+            aspiration_candidate = None
+            aspiration_score = float('-inf')
+            
+            # **Step 1: Generate all neighbors**
+            for neighbor in get_neighbors_all(best, video_size,  cache_capacity):
+                neighbor_score = score(neighbor, endpoint_data_description, endpoint_cache_description, request_description)
+                candidate_list.append((neighbor, neighbor_score))
+            
+            # **Step 2: Choose the best candidate**
+            for candidate, candidate_score in candidate_list:
+                candidate_key = state_to_key(candidate)
+
+                if candidate_key not in tabu:
+                    if candidate_score > best_candidate_score:
+                        best_candidate = candidate
+                        best_candidate_score = candidate_score
+                else:
+                    # **Aspiration: If move is tabu but improves the global best, allow it**
+                    if candidate_score > best_score and candidate_score > aspiration_score:
+                        aspiration_candidate = candidate
+                        aspiration_score = candidate_score
+
+            # **Step 3: Decide whether to use the best move or an aspiration move**
+            if best_candidate:
+                best = best_candidate
+                best_score = best_candidate_score
+                tabu[state_to_key(best)] = tabu_tenure  # Mark as tabu
+                iterations_without_improvement = 0  # Reset stagnation counter
+            elif aspiration_candidate:
+                best = aspiration_candidate
+                best_score = aspiration_score
+                tabu[state_to_key(best)] = tabu_tenure  # Override tabu
+                iterations_without_improvement = 0  # Reset stagnation counter
             else:
-                # **Aspiration: If move is tabu but improves the global best, allow it**
-                if candidate_score > best_score and candidate_score > aspiration_score:
-                    aspiration_candidate = candidate
-                    aspiration_score = candidate_score
-
-        # **Step 3: Decide whether to use the best move or an aspiration move**
-        if best_candidate:
-            best = best_candidate
-            best_score = best_candidate_score
-            tabu[state_to_key(best)] = tabu_tenure  # Mark as tabu
-            iterations_without_improvement = 0  # Reset stagnation counter
-        elif aspiration_candidate:
-            best = aspiration_candidate
-            best_score = aspiration_score
-            tabu[state_to_key(best)] = tabu_tenure  # Override tabu
-            iterations_without_improvement = 0  # Reset stagnation counter
-        else:
-            # **Fallback: Pick a random neighbor if no valid candidates exist**
-            if candidate_list:
-                best, best_score = random.choice(candidate_list)
-            iterations_without_improvement += 1  # Increment stagnation counter
+                # **Fallback: Pick a random neighbor if no valid candidates exist**
+                if candidate_list:
+                    best, best_score = random.choice(candidate_list)
+                iterations_without_improvement += 1  # Increment stagnation counter
+            
+            solution_id = f"solution_{iteration*1000000}.json"
+            solution_path = os.path.join(folder_path_scores, solution_id)
+            with open(solution_path, "a") as sol_file:
+                json.dump(best, sol_file)
+            csv_writer.writerow(["TabuSearch", solution_id, best_score])
+            csvfile.flush()  
     print(best_score)
+    
     return best
 
-problem_description, video_size, endpoint_data_description, endpoint_cache_description, request_description = parse_results('me_at_the_zoo.in')
-print(tabu_search(greedy_start(),video_size,endpoint_data_description,endpoint_cache_description,request_description,problem_description[4]))
+
+file = 'me_at_the_zoo.in'
+folder_path = "tabu"
+folder_path_scores = os.path.join("tabu/scores", file)
+folder_path_greedy_scores = os.path.join("tabu/greedy", file)
+problem_description, video_size, endpoint_data_description, endpoint_cache_description, request_description = parse_results(file)
+initial_solution = get_init_solution(
+    folder_path_scores=folder_path_scores,
+    file_name=file,
+    endpoint_data_description=endpoint_data_description,
+    endpoint_cache_description=endpoint_cache_description,
+    request_description=request_description
+)
+
+print(tabu_search(initial_solution, video_size, endpoint_data_description, endpoint_cache_description, request_description, problem_description[4]))

@@ -31,8 +31,6 @@ def greedy_start():
         if (curr_cap < cache_cap) and (video_size[int(video)] + curr_cap <= cache_cap) and (video not in solution[int(cache)]):
             solution[int(cache)].append(video)
 
-    print("solution:\n")
-    print(solution)
 
     # return greedy solution
     return solution
