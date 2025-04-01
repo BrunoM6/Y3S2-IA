@@ -8,6 +8,7 @@ from get_solutions import get_init_solution
 from score_functions import score
 from get_neighbours import get_neighbors
 from get_neighbours import get_neighbors_all
+from get_neighbours import state_to_key
 
 
 def tabu_search(initial_solution: dict, video_size: list, endpoint_data_description: list, 
