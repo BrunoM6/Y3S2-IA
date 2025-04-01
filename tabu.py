@@ -1,4 +1,5 @@
 import random
+import re
 import os
 import csv
 import json
@@ -120,22 +121,38 @@ def tabu_search(initial_solution: dict, video_size: list, endpoint_data_descript
     os.makedirs(folder_path, exist_ok=True)
     os.makedirs(folder_path_scores,exist_ok=True)
     
-    tabu = {}  # Tabu dictionary (stores states and their remaining forbidden tenure)
+    max_json_number = -1
+    result_file = None
+
+
+    for file2 in os.listdir(folder_path_scores):
+        match = re.match(r"solution_(\d+)\.json$", file2)
+        if match:
+            file_id = int(match.group(1))
+            if file_id > max_json_number:
+                max_json_number = file_id
+                result_file = file2
+
+    print(f"Largest file: {result_file}")
+
+    tabu = {}  
     best = initial_solution
     best_score = score(initial_solution, endpoint_data_description, endpoint_cache_description, request_description)
     solution_id = ""
     
-    iterations_without_improvement = 0  # Track stagnation
-    iteration = 0  # Count iterations
+    iterations_without_improvement = 0  
+    iteration = 0  
+
+
     
     with open(os.path.join(folder_path, "tabu_search_results.csv"), "a", newline="") as csvfile:
         csv_writer = csv.writer(csvfile)
-        csv_writer.writerow(["algorithm", "solution_id", "score"])
+        if(not os.path.exists(folder_path_scores)):
+            csv_writer.writerow(["algorithm", "solution_id", "score"])
         
-        while iteration < max_iterations and iterations_without_improvement < 500:  # Prevent infinite loops
+        while iteration < max_iterations and iterations_without_improvement < 500:  
             iteration += 1
 
-            # **Decrease tabu tenure and remove expired entries**
             tabu = {k: v - 1 for k, v in tabu.items() if v > 1}
 
             candidate_list = []  # Stores all valid neighbors
@@ -179,8 +196,7 @@ def tabu_search(initial_solution: dict, video_size: list, endpoint_data_descript
                 if candidate_list:
                     best, best_score = random.choice(candidate_list)
                 iterations_without_improvement += 1  # Increment stagnation counter
-            
-            solution_id = f"solution_{iteration*1000000}.json"
+            solution_id = f"solution_{max_json_number+iteration}.json"
             solution_path = os.path.join(folder_path_scores, solution_id)
             with open(solution_path, "a") as sol_file:
                 json.dump(best, sol_file)
