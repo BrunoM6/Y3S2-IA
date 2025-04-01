@@ -36,13 +36,14 @@ def tabu_search(initial_solution: dict, video_size: list, endpoint_data_descript
     best = initial_solution
     best_score = score(initial_solution, endpoint_data_description, endpoint_cache_description, request_description)
     solution_id = ""
+    print(best_score)
     
     iterations_without_improvement = 0  
     iteration = 0  
 
 
     
-    with open(os.path.join(folder_path, "tabu_search_results.csv"), "a", newline="") as csvfile:
+    with open(os.path.join(folder_path, "tabu.csv"), "a", newline="") as csvfile:
         csv_writer = csv.writer(csvfile)
         if(not os.path.exists(folder_path_scores)):
             csv_writer.writerow(["algorithm", "solution_id", "score"])
@@ -112,6 +113,7 @@ problem_description, video_size, endpoint_data_description, endpoint_cache_descr
 initial_solution = get_init_solution(
     folder_path_scores=folder_path_scores,
     file_name=file,
+    algorithm_name='tabu',
     endpoint_data_description=endpoint_data_description,
     endpoint_cache_description=endpoint_cache_description,
     request_description=request_description

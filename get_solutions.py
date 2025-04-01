@@ -35,13 +35,13 @@ def get_best_stored_solution(csv_path, folder_path):
     return (convert_keys_to_int(best_solution), best_score) if best_solution else (None, float('-inf'))
 
 
-def get_init_solution(folder_path_scores, file_name, endpoint_data_description, endpoint_cache_description, request_description):
+def get_init_solution(folder_path_scores, file_name, algorithm_name, endpoint_data_description, endpoint_cache_description, request_description):
     """
     Determine the best initial solution:
     - If a stored solution exists with a higher score, use it.
     - Otherwise, use the greedy solution.
     """
-    folder_path_greedy_scores = os.path.join("tabu", "greedy_scores")
+    folder_path_greedy_scores = os.path.join(algorithm_name, "greedy_scores")
     os.makedirs(folder_path_greedy_scores, exist_ok=True)
     
     score_file_path = os.path.join(folder_path_greedy_scores, f'score_{file_name}.txt')
@@ -55,7 +55,7 @@ def get_init_solution(folder_path_scores, file_name, endpoint_data_description, 
         with open(score_file_path, "w") as file_score:
             file_score.write(str(greedy_score))
     
-    csv_path = os.path.join("tabu", f'tabu_search_results.csv')
+    csv_path = os.path.join(algorithm_name, f'{algorithm_name}.csv')
     best_stored_solution, best_stored_score = get_best_stored_solution(csv_path, folder_path_scores)
 
     if best_stored_solution is not None and isinstance(best_stored_score, (int, float)) and best_stored_score >= greedy_score:
