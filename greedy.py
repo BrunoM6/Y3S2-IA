@@ -50,3 +50,4 @@ def current_cap(cache, solution):
     return sum(video_size[int(v)] for v in solution[int(cache)])
 
 problem_description, video_size, endpoint_data_description, endpoint_cache_description, request_description = parse_results('me_at_the_zoo.in')
+
