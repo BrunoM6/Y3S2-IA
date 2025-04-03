@@ -12,7 +12,7 @@ from get_neighbours import state_to_key
 
 def tabu_search(initial_solution: dict, video_size: list, endpoint_data_description: list, 
                  endpoint_cache_description: dict, request_description: dict, cache_capacity: int, 
-                 max_iterations=1000, tabu_tenure=8):
+                 max_iterations=1000, tabu_tenure=8, callback = None):
     
     global file
     os.makedirs(folder_path, exist_ok=True)
@@ -35,20 +35,20 @@ def tabu_search(initial_solution: dict, video_size: list, endpoint_data_descript
     tabu = {}  
     best = initial_solution
     best_score = score(initial_solution, endpoint_data_description, endpoint_cache_description, request_description)
+    initial_score = best_score
+    print(initial_score)
+    print(initial_solution)
     solution_id = ""
-    print(best_score)
     
     iterations_without_improvement = 0  
     iteration = 0  
 
-
-    
     with open(os.path.join(folder_path, "tabu.csv"), "a", newline="") as csvfile:
         csv_writer = csv.writer(csvfile)
         if(not os.path.exists(folder_path_scores)):
             csv_writer.writerow(["algorithm", "solution_id", "score"])
         
-        while iteration < max_iterations and iterations_without_improvement < 500:  
+        while iteration < max_iterations and iterations_without_improvement < 100:  
             iteration += 1
 
             tabu = {k: v - 1 for k, v in tabu.items() if v > 1}
@@ -100,9 +100,13 @@ def tabu_search(initial_solution: dict, video_size: list, endpoint_data_descript
                 json.dump(best, sol_file)
             csv_writer.writerow(["TabuSearch", solution_id, best_score])
             csvfile.flush()  
-    print(best_score)
     
-    return best
+    if best_score > int(initial_score):
+        print(best_score)
+        return best 
+    else:
+        print(initial_score)
+        return initial_solution
 
 
 file = 'me_at_the_zoo.in'
