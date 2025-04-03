@@ -20,3 +20,5 @@ def random_start(problem_description: list[int], video_size: list[int]):
         break
       else:
         solution[cache].append(random_video)
+
+  return solution
