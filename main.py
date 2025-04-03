@@ -10,6 +10,7 @@ from genetic import genetic_algorithm
 from score_functions import score
 from tabu import tabu_search
 
+from visual import update_plot
 
 def print_menu():
   print("Assignment 1 - T12G6")
@@ -132,7 +133,7 @@ while (run):
             population_size=66
 
             parameter_command = 0
-            while parameter_command != 4:
+            while parameter_command != 5:
               print_genetic_parameters()
               parameter_command = int(input())
               new_value = input("What is the new value you want to set?")
@@ -191,8 +192,9 @@ while (run):
 
             solution = tabu_search(starting_position, video_size, endpoint_data_description, endpoint_cache_description, request_description, problem_description[4])
 
-      #case 4:
-        # graphical representation of current or of chosen
+      case 4:
+        print("Showing last solution")
+        update_plot(solution, )
       
     case 5:
       run = False
