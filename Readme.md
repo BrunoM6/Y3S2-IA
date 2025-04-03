@@ -2,6 +2,9 @@
 
 ## Topic 3: Optimization Problems - Streaming Videos
 
+### How to run the project
+The project has two graphical components, the simple console based component is used to run parsing of different datasets, choose starting points, tune and run algorithms, and the graphical representation of our solution search space and of each solution for a chosen or the current solution reached. To run the project, just run `python main.py` on the terminal. Inputs are always just one number, and the program behaves expecting that.
+
 ### Problem Description
 The problem at hand consists of, given a description of cache servers, network endpoints and videos, along with predicted requests for individual videos, decide which videos to put in which cache server in order to minimize average waiting time for all requests.
 The network endpoints have a specified number of requests for certain videos, with associated latencies for both the data center and the cache servers.
@@ -45,6 +48,7 @@ To provide our solution space with a decent starting position, we apply a greedy
 - Compute score (total time saved) for every potential placement of videos in every cache based on the description;
 - Sort these potential placements and greedily assign videos to cache while there is enough capacity based on this.
 - Return the solution.
+Also, in program lifespans where you explore multiple algorithms for the same dataset, the Greedy solution used is the best solution found up to that point with any of the algorithms previously used.
 
 ### Random Point - Comparison Heuristic
 A random starting point from a function defined in our `random.py` file serves as a control group for our algorithms, in which we fill every single cache with a maximal random ammount of videos, respecting the constraints of size. It works like so:
@@ -53,3 +57,16 @@ A random starting point from a function defined in our `random.py` file serves a
 - Keep adding the video until the cache can't take in the next random;
 - Skip to next cache while we have caches to fill;
 - Return the solution.
+This similar starting point can be used to check how these algorithms perform in a balanced scenario. This is the default starting point used.
+
+### Algorithms
+We explored three different algorithms to solve the problem, simulated annealing, genetic algorithm and tabu search. 
+
+#### Simulated Annealing
+
+
+#### Genetic Algorithm
+
+
+#### Tabu Searc
+
