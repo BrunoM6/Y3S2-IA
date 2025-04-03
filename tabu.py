@@ -14,7 +14,7 @@ from visual import update_plot
 
 def tabu_search(initial_solution: dict, video_size: list, endpoint_data_description: list, 
                  endpoint_cache_description: dict, request_description: dict, cache_capacity: int, 
-                 max_iterations=1000, tabu_tenure=8, callback = None):
+                 max_iterations=1000, tabu_tenure=8):
     
     global file
     os.makedirs(folder_path, exist_ok=True)
@@ -50,8 +50,9 @@ def tabu_search(initial_solution: dict, video_size: list, endpoint_data_descript
         if(not os.path.exists(folder_path_scores)):
             csv_writer.writerow(["algorithm", "solution_id", "score"])
         prev_solution = {} 
-        while iteration < max_iterations and iterations_without_improvement < 500:  
+        while iteration < max_iterations and iterations_without_improvement < 50:  
             iteration += 1
+            print(iterations_without_improvement)
 
             tabu = {k: v - 1 for k, v in tabu.items() if v > 1}
 
@@ -83,10 +84,17 @@ def tabu_search(initial_solution: dict, video_size: list, endpoint_data_descript
 
             # **Step 3: Decide whether to use the best move or an aspiration move**
             if best_candidate:
-                best = best_candidate
-                best_score = best_candidate_score
-                tabu[state_to_key(best)] = tabu_tenure  # Mark as tabu
-                iterations_without_improvement = 0  # Reset stagnation counter
+                if(best_candidate_score>best_score):
+                    best = best_candidate
+                    best_score = best_candidate_score
+                    tabu[state_to_key(best)] = tabu_tenure  # Mark as tabu
+                    iterations_without_improvement = 0  # Reset stagnation counter
+                else:
+                    best = best_candidate
+                    best_score = best_candidate_score
+                    tabu[state_to_key(best)] = tabu_tenure  # Mark as tabu
+                    iterations_without_improvement += 1  # Reset stagnation counter
+
             elif aspiration_candidate:
                 best = aspiration_candidate
                 best_score = aspiration_score

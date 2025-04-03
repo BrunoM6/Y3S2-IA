@@ -42,7 +42,7 @@ def get_neighbors(state: dict, video_size: list, cache_capacity: int):
                         
     return neighbors
 
-def get_neighbors_all(state: dict, video_size: list, cache_capacity: int, max_neighbors: int = 500):
+def get_neighbors_all(state: dict, video_size: list, cache_capacity: int, max_neighbors: int = 10):
     neighbors = []
     cache_ids = list(state.keys())
     all_videos = set(range(len(video_size)))  # All video IDs (assuming videos are indexed from 0)
