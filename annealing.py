@@ -1,14 +1,16 @@
 import csv
+import matplotlib.pyplot as plt
 import json
 import os
 import random
 import re
 import math
 
-from get_neighbours import get_neighbors, get_neighbors_all, state_to_key
+from get_neighbours import get_neighbors, get_neighbors_all
 from get_solutions import get_init_solution
 from parse import parse_results
 from score_functions import score
+from visual import update_plot
 
 
 
@@ -37,6 +39,7 @@ def simulated_annealing(initial_solution: dict, video_size: list, endpoint_data_
     
     
     temperature = initial_temperature
+    prev_solution = {}
     
     with open(os.path.join(folder_path, "annealing.csv"), "a", newline="") as csvfile:
         csv_writer = csv.writer(csvfile)
@@ -50,6 +53,7 @@ def simulated_annealing(initial_solution: dict, video_size: list, endpoint_data_
                 break  # Stop if the temperature is too low
             
             neighbor = random.choice(get_neighbors_all(current_solution, video_size, cache_capacity))
+            prev_solution = update_plot(current_solution, neighbor, solution_positions, ax, fig, prev_solution)
             neighbor_score = score(neighbor, endpoint_data_description, endpoint_cache_description, request_description)
             
             delta_score = neighbor_score - current_score
@@ -86,4 +90,15 @@ initial_solution = get_init_solution(
     request_description=request_description
 )
 
+#Create plot
+# Store solution positions
+solution_positions = {}
+
+# Graph setup
+fig, ax = plt.subplots()
+ax.set_xlim(-1, 1)
+ax.set_ylim(-1, 1)
+ax.set_xlabel("X")
+ax.set_ylabel("Y")
+ax.set_title("Tabu Search Solution Mapping")
 print(simulated_annealing(initial_solution, video_size, endpoint_data_description, endpoint_cache_description, request_description, problem_description[4]))

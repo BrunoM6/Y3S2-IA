@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import random
 import re
 import os
@@ -9,6 +10,7 @@ from score_functions import score
 from get_neighbours import get_neighbors
 from get_neighbours import get_neighbors_all
 from get_neighbours import state_to_key
+from visual import update_plot
 
 def tabu_search(initial_solution: dict, video_size: list, endpoint_data_description: list, 
                  endpoint_cache_description: dict, request_description: dict, cache_capacity: int, 
@@ -47,7 +49,7 @@ def tabu_search(initial_solution: dict, video_size: list, endpoint_data_descript
         csv_writer = csv.writer(csvfile)
         if(not os.path.exists(folder_path_scores)):
             csv_writer.writerow(["algorithm", "solution_id", "score"])
-        
+        prev_solution = {} 
         while iteration < max_iterations and iterations_without_improvement < 500:  
             iteration += 1
 
@@ -61,6 +63,7 @@ def tabu_search(initial_solution: dict, video_size: list, endpoint_data_descript
             
             # **Step 1: Generate all neighbors**
             for neighbor in get_neighbors_all(best, video_size,  cache_capacity):
+                prev_solution = update_plot(best, neighbor, solution_positions, ax, fig, prev_solution)
                 neighbor_score = score(neighbor, endpoint_data_description, endpoint_cache_description, request_description)
                 candidate_list.append((neighbor, neighbor_score))
             
@@ -119,4 +122,24 @@ initial_solution = get_init_solution(
     request_description=request_description
 )
 
+
+
+#Create plot
+# Store solution positions
+solution_positions = {}
+
+# Graph setup
+fig, ax = plt.subplots()
+ax.set_xlim(-1, 1)
+ax.set_ylim(-1, 1)
+ax.set_xlabel("X")
+ax.set_ylabel("Y")
+ax.set_title("Tabu Search Solution Mapping")
+
+
+
 print(tabu_search(initial_solution, video_size, endpoint_data_description, endpoint_cache_description, request_description, problem_description[4]))
+
+plt.show(block=True)
+
+plt.close("all")  # Closes all Matplotlib figures
