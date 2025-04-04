@@ -41,12 +41,13 @@ def print_algorithms(dataset: str):
   print("3 - Tabu Search")
   print("4 - Quit")
 
-def print_annealing_parameters(max_iterations: int, initial_temperature: int, cooling_rate: float):
+def print_annealing_parameters(max_iterations: int, initial_temperature: int, cooling_rate: float, minimum_temperature: float):
   print("Change any parameter")
   print(f"1 - Max Iterations (current: {max_iterations})")
   print(f"2 - Initial Temperature (current: {initial_temperature})")
   print(f"3 - Cooling Rate (current: {cooling_rate})")
-  print("4 - Resume")
+  print(f"4 - Minimum Temperature (current: {minimum_temperature})")
+  print("5 - Resume")
 
 def print_genetic_parameters(generations: int, mutation_rate: float, tournament_size: int):
   print("Change any parameter")
@@ -55,64 +56,67 @@ def print_genetic_parameters(generations: int, mutation_rate: float, tournament_
   print(f"3 - Tournament Size (current: {tournament_size})")
   print("4 - Resume")
 
-run = True
 datasets = {1: 'kittens.in.txt', 2: 'me_at_the_zoo.in', 3: 'trending_today.in', 4: 'videos_worth_spreading.in'}
+dataset = 'me_at_the_zoo.in'
+problem_description, video_size, endpoint_data_description, endpoint_cache_description, request_description = parse_results(dataset)
+start_position_flag = 2
 
-while (run):
-  dataset = "None"
-  start_position_flag = 2
+while True:
   print_menu()
 
-  # choose dataset
-  input_command = int(input())
+  # menu commands
+  input_command = int(input("Action:"))
   match input_command:
+    # choose dataset
     case 1:
       dataset_command = 0
       while (dataset_command != 5):
         print_datasets()
-        dataset_command = int(input())
-        if (datasets[input_command]):
-          dataset = datasets
+        dataset_command = int(input("Dataset:"))
+        if dataset_command in datasets:
+          dataset = datasets[dataset_command]
           problem_description, video_size, endpoint_data_description, endpoint_cache_description, request_description = parse_results(dataset)
+          break
     
     # choose starting point
     case 2:
-      while start_position_flag != 1 or start_position_flag != 2:
+      print_start_menu()
+      start_position_flag = int(input("Starting Point:"))
+      while start_position_flag != 1 and start_position_flag != 2:
         print_start_menu()
-        start_position_flag = int(input())
+        start_position_flag = int(input("Starting Point:"))
 
     # choose algorithm
     case 3:
       algorithm_command = 0
       while algorithm_command != 4:
         print_algorithms(dataset)
-        algorithm_command = int(input())
+        algorithm_command = int(input("Algorithm:"))
         match algorithm_command:
           # annealing, with parameter control
           case 1:
             max_iterations=1000
             initial_temperature=100
-            cooling_rate=0.99
+            cooling_rate=0.95
+            minimum_temperature=1e-3
 
             parameter_command = 0
-            while parameter_command != 4:
-              print_annealing_parameters()
-              parameter_command = int(input())
-              new_value = input("What is the new value you want to set?")
+            while parameter_command != 5:
+              print_annealing_parameters(max_iterations, initial_temperature, cooling_rate, minimum_temperature)
+              parameter_command = int(input("Action:"))
               match parameter_command:
                 case 1:
-                  max_iterations = int(new_value)
+                  max_iterations = int(input("What is the new value you want to set?"))
                 case 2:
-                  initial_temperature = int(new_value)
+                  initial_temperature = int(input("What is the new value you want to set?"))
                 case 3:
-                  cooling_rate = float(new_value)
+                  cooling_rate = float(input("What is the new value you want to set?"))
+                case 4:
+                  minimum_temperature = float(input("What is the new value you want to set?"))
 
             # get the correct starting position depending on flag
-            folder_path = "annealing"
-            folder_path_scores = os.path.join("annealing/scores", dataset)
             if start_position_flag == 1:
               starting_position = get_init_solution(
-                folder_path_scores,
                 dataset,
                 'annealing',
                 endpoint_data_description,
@@ -123,7 +127,8 @@ while (run):
               starting_position = random_start(problem_description, video_size)
             
             solution = simulated_annealing(starting_position, video_size, endpoint_data_description, 
-                                endpoint_cache_description, request_description, problem_description[4])
+                                endpoint_cache_description, request_description, problem_description[4], dataset, 
+                                max_iterations, initial_temperature, cooling_rate)
           
           # genetic, with parameter control
           case 2:
@@ -134,25 +139,21 @@ while (run):
 
             parameter_command = 0
             while parameter_command != 5:
-              print_genetic_parameters()
-              parameter_command = int(input())
-              new_value = input("What is the new value you want to set?")
+              print_genetic_parameters(generations, mutation_rate, tournament_size, population_size)
+              parameter_command = int(input("Action:"))
               match parameter_command:
                 case 1:
-                  generations = int(new_value)
+                  generations = int(input("What is the new value you want to set?"))
                 case 2:
-                  mutation_rate = float(new_value)
+                  mutation_rate = float(input("What is the new value you want to set?"))
                 case 3:
-                  tournament_size = int(new_value)
+                  tournament_size = int(input("What is the new value you want to set?"))
                 case 4:
-                  population_size = int(new_value)
+                  population_size = int(input("What is the new value you want to set?"))
             
             # get the correct starting position depending on flag
-            folder_path = "genetic"
-            folder_path_scores = os.path.join("genetic/scores", dataset)
             if start_position_flag == 1:
               starting_position = get_init_solution(
-                folder_path_scores,
                 dataset,
                 'genetic',
                 endpoint_data_description,
@@ -173,14 +174,9 @@ while (run):
 
           # tabu
           case 3: 
-            folder_path = "tabu"
-            folder_path_scores = os.path.join("tabu/scores", dataset)
-            
             # get the correct starting position
-            folder_path_greedy_scores = os.path.join("tabu/greedy", dataset)
             if start_position_flag == 1:
               starting_position = get_init_solution(
-                folder_path_scores,
                 dataset,
                 'tabu',
                 endpoint_data_description,
@@ -192,11 +188,13 @@ while (run):
 
             solution = tabu_search(starting_position, video_size, endpoint_data_description, endpoint_cache_description, request_description, problem_description[4])
 
-      case 4:
-        print("Showing last solution")
-        update_plot(solution, )
-      
+    # display data
+    case 4:
+      print("Showing last solution")
+      #update_plot(solution, )
+    
+    # quit 
     case 5:
-      run = False
+      break
 
 print("Exited sucessfully :D")

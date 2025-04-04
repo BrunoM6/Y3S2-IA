@@ -3,7 +3,7 @@
 ## Topic 3: Optimization Problems - Streaming Videos
 
 ### How to run the project
-The project has two graphical components, the simple console based component is used to run parsing of different datasets, choose starting points, tune and run algorithms, and the graphical representation of our solution search space and of each solution for a chosen or the current solution reached. To run the project, just run `python main.py` on the terminal. Inputs are always just one number, and the program behaves expecting that.
+The project has two graphical components, the simple console based component is used to run parsing of different datasets, choose starting points, tune and run algorithms, and the graphical representation of our solution search space and of each solution for a chosen or the current solution reached. To run the project, just run `python main.py` on the terminal. Inputs are always just one number, and the program behaves expecting that. By default, the small dataset with random starting point is what starts as selected.
 
 ### Problem Description
 The problem at hand consists of, given a description of cache servers, network endpoints and videos, along with predicted requests for individual videos, decide which videos to put in which cache server in order to minimize average waiting time for all requests.

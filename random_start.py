@@ -13,7 +13,7 @@ def random_start(problem_description: list[int], video_size: list[int]):
     total_capacity = 0
     while (total_capacity < cache_size):
       # choose a random video
-      random_video = randint(0, range(video_number))
+      random_video = randint(0, video_number - 1)
       total_capacity += video_size[random_video]
       # skip to next cache if we would surpass cache capacity
       if total_capacity > cache_size:
