@@ -41,13 +41,14 @@ def print_algorithms(dataset: str):
   print("3 - Tabu Search")
   print("4 - Quit")
 
-def print_annealing_parameters(max_iterations: int, initial_temperature: int, cooling_rate: float, minimum_temperature: float):
+def print_annealing_parameters(max_iterations: int, iterations_without_improvement_cap: int, initial_temperature: int, cooling_rate: float, minimum_temperature: float):
   print("Change any parameter")
   print(f"1 - Max Iterations (current: {max_iterations})")
-  print(f"2 - Initial Temperature (current: {initial_temperature})")
-  print(f"3 - Cooling Rate (current: {cooling_rate})")
-  print(f"4 - Minimum Temperature (current: {minimum_temperature})")
-  print("5 - Resume")
+  print(f"1 - Iterations without improvement cap (current: {iterations_without_improvement_cap})")
+  print(f"3 - Initial Temperature (current: {initial_temperature})")
+  print(f"4 - Cooling Rate (current: {cooling_rate})")
+  print(f"5 - Minimum Temperature (current: {minimum_temperature})")
+  print("6 - Resume")
 
 def print_genetic_parameters(generations: int, mutation_rate: float, tournament_size: int):
   print("Change any parameter")
@@ -95,23 +96,26 @@ while True:
         match algorithm_command:
           # annealing, with parameter control
           case 1:
-            max_iterations=1000
-            initial_temperature=100
-            cooling_rate=0.95
-            minimum_temperature=1e-3
+            max_iterations=10000
+            iterations_without_improvement_cap = 500
+            initial_temperature=1000
+            cooling_rate=0.99
+            minimum_temperature=1e-4
 
             parameter_command = 0
-            while parameter_command != 5:
-              print_annealing_parameters(max_iterations, initial_temperature, cooling_rate, minimum_temperature)
+            while parameter_command != 6:
+              print_annealing_parameters(max_iterations, iterations_without_improvement_cap, initial_temperature, cooling_rate, minimum_temperature)
               parameter_command = int(input("Action:"))
               match parameter_command:
                 case 1:
                   max_iterations = int(input("What is the new value you want to set?"))
                 case 2:
-                  initial_temperature = int(input("What is the new value you want to set?"))
+                  iterations_without_improvement_cap = int(input("What is the new value you want to set?"))
                 case 3:
-                  cooling_rate = float(input("What is the new value you want to set?"))
+                  initial_temperature = int(input("What is the new value you want to set?"))
                 case 4:
+                  cooling_rate = float(input("What is the new value you want to set?"))
+                case 5:
                   minimum_temperature = float(input("What is the new value you want to set?"))
 
             # get the correct starting position depending on flag

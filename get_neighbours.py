@@ -105,3 +105,82 @@ def get_neighbors_all(state: dict, video_size: list, cache_capacity: int, max_ne
 
 def state_to_key(state: dict) -> frozenset:
     return frozenset((cache, frozenset(videos)) for cache, videos in state.items())
+
+def get_optimized_neighbors(state: dict, video_size: list, cache_capacity: int, max_neighbors: int = 50):
+    neighbors = []
+    cache_ids = list(state.keys())
+    
+    # precompute current loads
+    current_loads = {
+        cache: sum(video_size[int(v)] for v in state[cache])
+        for cache in state
+    }
+    
+    # track all cached videos for faster lookups
+    cached_videos_by_cache = {cache: set(videos) for cache, videos in state.items()}
+    all_cached_videos = set(v for videos in cached_videos_by_cache.values() for v in videos)
+    
+    # get uncached videos (as integers)
+    all_videos = set(range(len(video_size)))
+    uncached_videos = list(all_videos - all_cached_videos)
+    
+    neighbor_count = 0
+    operations = ['swap', 'add', 'remove']
+    
+    while neighbor_count < max_neighbors:
+        operation = random.choice(operations)
+        
+        if operation == 'swap' and len(cache_ids) >= 2:
+            # Swap videos between two caches
+            cache_a, cache_b = random.sample(cache_ids, 2)
+            
+            # Only attempt if both caches have videos
+            if cached_videos_by_cache[cache_a] and cached_videos_by_cache[cache_b]:
+                video_a = random.choice(list(cached_videos_by_cache[cache_a]))
+                video_b = random.choice(list(cached_videos_by_cache[cache_b]))
+                
+                # Check capacity constraints
+                new_load_a = current_loads[cache_a] - video_size[int(video_a)] + video_size[int(video_b)]
+                new_load_b = current_loads[cache_b] - video_size[int(video_b)] + video_size[int(video_a)]
+                
+                if new_load_a <= cache_capacity and new_load_b <= cache_capacity:
+                    new_state = state.copy()
+                    new_state[cache_a] = state[cache_a].copy()
+                    new_state[cache_b] = state[cache_b].copy()
+                    
+                    new_state[cache_a].remove(video_a)
+                    new_state[cache_b].remove(video_b)
+                    new_state[cache_a].append(video_b)
+                    new_state[cache_b].append(video_a)
+                    
+                    neighbors.append(new_state)
+                    neighbor_count += 1
+        
+        elif operation == 'add' and uncached_videos:
+            # Add an uncached video to a random cache
+            cache = random.choice(cache_ids)
+            video = random.choice(uncached_videos)
+            
+            new_load = current_loads[cache] + video_size[video]
+            if new_load <= cache_capacity:
+                new_state = state.copy()
+                new_state[cache] = state[cache].copy()
+                new_state[cache].append(video)
+                
+                neighbors.append(new_state)
+                neighbor_count += 1
+        
+        elif operation == 'remove':
+            # Remove a video from a random cache
+            cache = random.choice(cache_ids)
+            if cached_videos_by_cache[cache]:
+                video = random.choice(list(cached_videos_by_cache[cache]))
+                
+                new_state = state.copy()
+                new_state[cache] = state[cache].copy()
+                new_state[cache].remove(video)
+                
+                neighbors.append(new_state)
+                neighbor_count += 1
+    
+    return neighbors
