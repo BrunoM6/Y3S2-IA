@@ -5,8 +5,6 @@ import json
 import os
 from get_solutions import convert_keys_to_int
 from parse import parse_results
-from greedy import greedy_start
-
 
 def mutate_solution(solution, video_size, problem_description, mutation_rate=0.2):
     """Apply small mutations to greedy."""

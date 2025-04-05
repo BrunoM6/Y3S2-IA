@@ -3,8 +3,6 @@ import re
 import os
 import csv
 import json
-from parse import parse_results
-from get_solutions import get_init_solution
 from score_functions import score
 
 

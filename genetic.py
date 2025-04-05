@@ -3,10 +3,7 @@ import copy
 import os
 import json
 import csv
-from greedy import greedy_start
-from population import generate_population, mutate_solution
-from score_functions import score
-from parse import parse_results
+from population import mutate_solution
 
 def tournament_selection(population, fitness_func, tournament_size=3):
     """Selects a parent using tournament selection."""

@@ -1,4 +1,3 @@
-from parse import parse_results
 from random import randint
 
 def random_start(problem_description: list[int], video_size: list[int]):

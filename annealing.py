@@ -14,7 +14,7 @@ from score_functions import score
 
 def simulated_annealing(initial_solution: dict, video_size: list, endpoint_data_description: list, 
                          endpoint_cache_description: dict, request_description: dict, cache_capacity: int, dataset: str,
-                         max_iterations=10000, iterations_without_improvement_cap=500, initial_temperature=1000, cooling_rate=0.99, minimum_temperature=1e-4):
+                         max_iterations=10000, iterations_without_improvement_cap=500, initial_temperature=1000, cooling_rate=0.99, minimum_temperature=1e-4, neighbors_generated=50):
     # initialize the directories for results
     dataset_path_scores = os.path.join("scores", dataset)
     os.makedirs(dataset_path_scores, exist_ok=True)
@@ -35,6 +35,7 @@ def simulated_annealing(initial_solution: dict, video_size: list, endpoint_data_
     best_solution = current_solution
     current_score = score(initial_solution, endpoint_data_description, endpoint_cache_description, request_description)
     best_score = current_score
+
     print(f"Starting score for this Simulated Annealing instance is {current_score}")
     
     # initialize tracking variables for algorithm
@@ -44,6 +45,15 @@ def simulated_annealing(initial_solution: dict, video_size: list, endpoint_data_
 
     with open(os.path.join(dataset_path_scores, "annealing.csv"), "a", newline="") as csvfile:
         csv_writer = csv.writer(csvfile)
+        
+        # log the starting solution as solution 0 for annealing
+        solution_id = "solution_0.json"
+        solution_path = os.path.join(dataset_path_results, solution_id)
+        with open(solution_path, "w") as sol_file:
+            json.dump(current_solution, sol_file)
+        csv_writer.writerow(["SimulatedAnnealing", solution_id, current_score])
+        csvfile.flush()
+        
         if not os.path.exists(os.path.join(dataset_path_scores, "annealing.csv")) or os.path.getsize(os.path.join(dataset_path_scores, "annealing.csv")) == 0:  # check if the folder is empty
                 csv_writer.writerow(["algorithm", "solution_id", "score"])
         
@@ -54,17 +64,17 @@ def simulated_annealing(initial_solution: dict, video_size: list, endpoint_data_
                 break  # Stop if the temperature is too low
             
             # optimized neighbor getting heuristic
-            neighbors = get_optimized_neighbors(current_solution, video_size, cache_capacity)
+            neighbors = get_optimized_neighbors(current_solution, video_size, cache_capacity, neighbors_generated)
             if not neighbors:
                 continue
             
             # use neighbor cache to avoid using score unnecessarily
-            neighbor = random.choice(neighbors)
+            neighbor, change = random.choice(neighbors)
             neighbor_key = state_to_key(neighbor)
             if neighbor_key in score_cache:
                 neighbor_score = score_cache[neighbor_key]
             else:
-                neighbor_score = score(neighbor, endpoint_data_description, endpoint_cache_description, request_description)
+                neighbor_score = score(neighbor, endpoint_data_description, endpoint_cache_description, request_description, current_solution, current_score, change)
                 score_cache[neighbor_key] = neighbor_score
             
             # get the delta and act accordingly
@@ -73,20 +83,18 @@ def simulated_annealing(initial_solution: dict, video_size: list, endpoint_data_
                 current_solution = neighbor
                 current_score = neighbor_score
                 
-                # check for improvement
-                if current_score > best_score:
+                # check for improvement and save
+                if current_score >= best_score:
                     best_solution = current_solution
                     best_score = current_score
 
-                    # save solution in this case and log the score
-                    solution_id = f"solution_{max_json_number + iteration}.json"
-                    solution_path = os.path.join(dataset_path_results, solution_id)
-                    with open(solution_path, "w") as sol_file:
-                        json.dump(current_solution, sol_file)
-                    csv_writer.writerow(["SimulatedAnnealing", solution_id, current_score])
-                    csvfile.flush()
-                else:
-                    iterations_without_improvement += 1
+                # log the state
+                solution_id = f"solution_{max_json_number + iteration}.json"
+                solution_path = os.path.join(dataset_path_results, solution_id)
+                with open(solution_path, "w") as sol_file:
+                    json.dump(current_solution, sol_file)
+                csv_writer.writerow(["SimulatedAnnealing", solution_id, current_score])
+                csvfile.flush()
             else:
                 iterations_without_improvement += 1
     

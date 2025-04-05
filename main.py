@@ -41,14 +41,15 @@ def print_algorithms(dataset: str):
   print("3 - Tabu Search")
   print("4 - Quit")
 
-def print_annealing_parameters(max_iterations: int, iterations_without_improvement_cap: int, initial_temperature: int, cooling_rate: float, minimum_temperature: float):
+def print_annealing_parameters(max_iterations: int, iterations_without_improvement_cap: int, initial_temperature: int, cooling_rate: float, minimum_temperature: float, neighbors_generated: int):
   print("Change any parameter")
   print(f"1 - Max Iterations (current: {max_iterations})")
-  print(f"1 - Iterations without improvement cap (current: {iterations_without_improvement_cap})")
+  print(f"2 - Iterations without improvement cap (current: {iterations_without_improvement_cap})")
   print(f"3 - Initial Temperature (current: {initial_temperature})")
   print(f"4 - Cooling Rate (current: {cooling_rate})")
   print(f"5 - Minimum Temperature (current: {minimum_temperature})")
-  print("6 - Resume")
+  print(f"6 - Generated Neighbors in each iteration (current: {neighbors_generated})")
+  print("7 - Resume")
 
 def print_genetic_parameters(generations: int, mutation_rate: float, tournament_size: int):
   print("Change any parameter")
@@ -60,7 +61,7 @@ def print_genetic_parameters(generations: int, mutation_rate: float, tournament_
 datasets = {1: 'kittens.in.txt', 2: 'me_at_the_zoo.in', 3: 'trending_today.in', 4: 'videos_worth_spreading.in'}
 dataset = 'me_at_the_zoo.in'
 problem_description, video_size, endpoint_data_description, endpoint_cache_description, request_description = parse_results(dataset)
-start_position_flag = 2
+start_position_flag = 1
 
 while True:
   print_menu()
@@ -96,15 +97,16 @@ while True:
         match algorithm_command:
           # annealing, with parameter control
           case 1:
-            max_iterations=10000
-            iterations_without_improvement_cap = 500
-            initial_temperature=1000
-            cooling_rate=0.99
+            max_iterations=1000
+            iterations_without_improvement_cap = 50
+            initial_temperature=100
+            cooling_rate=0.995
             minimum_temperature=1e-4
+            neighbors_generated = 50
 
             parameter_command = 0
-            while parameter_command != 6:
-              print_annealing_parameters(max_iterations, iterations_without_improvement_cap, initial_temperature, cooling_rate, minimum_temperature)
+            while parameter_command != 7:
+              print_annealing_parameters(max_iterations, iterations_without_improvement_cap, initial_temperature, cooling_rate, minimum_temperature, neighbors_generated)
               parameter_command = int(input("Action:"))
               match parameter_command:
                 case 1:
@@ -117,10 +119,14 @@ while True:
                   cooling_rate = float(input("What is the new value you want to set?"))
                 case 5:
                   minimum_temperature = float(input("What is the new value you want to set?"))
+                case 6:
+                  neighbors_generated = int(input("What is the new value you want to set?"))
 
             # get the correct starting position depending on flag
             if start_position_flag == 1:
               starting_position = get_init_solution(
+                problem_description, 
+                video_size, 
                 dataset,
                 'annealing',
                 endpoint_data_description,
@@ -129,10 +135,10 @@ while True:
               )
             elif start_position_flag == 2:
               starting_position = random_start(problem_description, video_size)
-            
+
             solution = simulated_annealing(starting_position, video_size, endpoint_data_description, 
                                 endpoint_cache_description, request_description, problem_description[4], dataset, 
-                                max_iterations, initial_temperature, cooling_rate)
+                                max_iterations, initial_temperature, cooling_rate, neighbors_generated)
           
           # genetic, with parameter control
           case 2:
@@ -158,6 +164,8 @@ while True:
             # get the correct starting position depending on flag
             if start_position_flag == 1:
               starting_position = get_init_solution(
+                problem_description, 
+                video_size, 
                 dataset,
                 'genetic',
                 endpoint_data_description,
@@ -181,6 +189,8 @@ while True:
             # get the correct starting position
             if start_position_flag == 1:
               starting_position = get_init_solution(
+                problem_description, 
+                video_size, 
                 dataset,
                 'tabu',
                 endpoint_data_description,

@@ -3,7 +3,7 @@
 ## Topic 3: Optimization Problems - Streaming Videos
 
 ### How to run the project
-The project has two graphical components, the simple console based component is used to run parsing of different datasets, choose starting points, tune and run algorithms, and the graphical representation of our solution search space and of each solution for a chosen or the current solution reached. To run the project, just run `python main.py` on the terminal. Inputs are always just one number, and the program behaves expecting that. By default, the small dataset with random starting point is what starts as selected.
+The project has two graphical components, the simple console based component is used to run parsing of different datasets, choose starting points, tune and run algorithms, and the graphical representation of our solution search space and of each solution for a chosen or the current solution reached. To run the project, just run `python main.py` on the terminal. Inputs are always just one number, and the program behaves expecting that. By default, the small dataset with greedy starting point is what starts as selected.
 
 ### Problem Description
 The problem at hand consists of, given a description of cache servers, network endpoints and videos, along with predicted requests for individual videos, decide which videos to put in which cache server in order to minimize average waiting time for all requests.
@@ -48,7 +48,7 @@ To provide our solution space with a decent starting position, we apply a greedy
 - Compute score (total time saved) for every potential placement of videos in every cache based on the description;
 - Sort these potential placements and greedily assign videos to cache while there is enough capacity based on this.
 - Return the solution.
-Also, in program lifespans where you explore multiple algorithms for the same dataset, the Greedy solution used is the best solution found up to that point with any of the algorithms previously used.
+Also, in program lifespans where you explore multiple algorithms for the same dataset, the Greedy solution used is the best solution found up to that point with any of the algorithms previously used. We found that this heuristic performs worse on larger caches and better on smaller ones. This is the default starting point used. 
 
 ### Random Point - Comparison Heuristic
 A random starting point from a function defined in our `random.py` file serves as a control group for our algorithms, in which we fill every single cache with a maximal random ammount of videos, respecting the constraints of size. It works like so:
@@ -57,16 +57,22 @@ A random starting point from a function defined in our `random.py` file serves a
 - Keep adding the video until the cache can't take in the next random;
 - Skip to next cache while we have caches to fill;
 - Return the solution.
-This similar starting point can be used to check how these algorithms perform in a balanced scenario. This is the default starting point used.
+This similar starting point can be used to check how these algorithms perform in a balanced scenario. 
 
 ### Algorithms
 We explored three different algorithms to solve the problem, simulated annealing, genetic algorithm and tabu search. 
 
 #### Simulated Annealing
-
+The annealing algorithm implemented iteratively explores the solution space using neighbor-generating functions that perform swap, add, and remove operations. It uses the annealing criteria that utilizes current temperature to define odds of acceptance of worse solutions.
+Key parameters—including the maximum number of iterations, iterations without improvement, initial temperature, cooling rate, minimum temperature, and the number of generated neighbors per iteration—are configurable, enabling fine-tuning for different dataset sizes and performance requirements. This configurability allows the method to be effectively adapted to large-scale problems, such as those involving thousands of videos, numerous endpoints, and a complex network of cache servers. By combining heuristic exploration with adaptive parameter tuning, the algorithm incrementally improves its solution quality, making it a more robust tool. We found that annealing didn't do that well starting from the Greedy Heuristicin smaller cached datasets, since the Greedy starting point was already a local (possible global for the smaller dataset) peak. We also found that this algorithm didn't work too well for large cache sizes and was slower at increasing the score. This is due to the neighbors explored changing only one video at a time, making it so that each iteration is not felt as much since there is much more cache space to distribute.
 
 #### Genetic Algorithm
 
 
 #### Tabu Searc
 
+### Generating Neighbors
+We generate neighbors for current states through three actions, adding a video to a random cache where it is not present, removing a video from a non-empty cache and swapping two videos between two non-empty caches such that videos don't get repeated.
+
+### Scoring
+Our scoring function has two components, the base scoring, that runs through all the request descriptions and computes the total time saved to obtain the score, and a rescoring component that, upon taking in the optional parameters of the changes, previous solution score and state, we only calculate the difference in total time made, we reverse the score calculation to obtain the original total time, and re-calculate the score after adding this delta. This is fundamental for the efficiency of every algorithm, since calling the total scoring function every time would make running our implementations unfeasible for medium and large datasets.

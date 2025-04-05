@@ -116,14 +116,6 @@ def get_optimized_neighbors(state: dict, video_size: list, cache_capacity: int, 
         for cache in state
     }
     
-    # track all cached videos for faster lookups
-    cached_videos_by_cache = {cache: set(videos) for cache, videos in state.items()}
-    all_cached_videos = set(v for videos in cached_videos_by_cache.values() for v in videos)
-    
-    # get uncached videos (as integers)
-    all_videos = set(range(len(video_size)))
-    uncached_videos = list(all_videos - all_cached_videos)
-    
     neighbor_count = 0
     operations = ['swap', 'add', 'remove']
     
@@ -131,56 +123,92 @@ def get_optimized_neighbors(state: dict, video_size: list, cache_capacity: int, 
         operation = random.choice(operations)
         
         if operation == 'swap' and len(cache_ids) >= 2:
-            # Swap videos between two caches
+            # swap videos between two caches (keep randomizing until we get two non-empty caches)
             cache_a, cache_b = random.sample(cache_ids, 2)
+            while not (state[cache_a] and state[cache_b]):
+                cache_a, cache_b = random.sample(cache_ids, 2)
+
+            # get a random video from each cache
+            video_a = random.choice(list(state[cache_a]))
+            video_b = random.choice(list(state[cache_b]))
             
-            # Only attempt if both caches have videos
-            if cached_videos_by_cache[cache_a] and cached_videos_by_cache[cache_b]:
-                video_a = random.choice(list(cached_videos_by_cache[cache_a]))
-                video_b = random.choice(list(cached_videos_by_cache[cache_b]))
-                
-                # Check capacity constraints
+            # check capacity constraints
+            new_load_a = current_loads[cache_a] - video_size[int(video_a)] + video_size[int(video_b)]
+            new_load_b = current_loads[cache_b] - video_size[int(video_b)] + video_size[int(video_a)]
+            attemps = 0
+
+            # keep looking for a non-overflowing pair for a maximum 50 attempts (assume there is no pair then)
+            while (new_load_a > cache_capacity or new_load_b > cache_capacity) and attemps < 50:
+                video_a = random.choice(list(state[cache_a]))
+                video_b = random.choice(list(state[cache_b]))
+
                 new_load_a = current_loads[cache_a] - video_size[int(video_a)] + video_size[int(video_b)]
                 new_load_b = current_loads[cache_b] - video_size[int(video_b)] + video_size[int(video_a)]
+                attemps += 1
+
+            if attemps < 50:
+                new_state = state.copy()
+                new_state[cache_a] = state[cache_a].copy()
+                new_state[cache_b] = state[cache_b].copy()
                 
-                if new_load_a <= cache_capacity and new_load_b <= cache_capacity:
-                    new_state = state.copy()
-                    new_state[cache_a] = state[cache_a].copy()
-                    new_state[cache_b] = state[cache_b].copy()
-                    
-                    new_state[cache_a].remove(video_a)
-                    new_state[cache_b].remove(video_b)
-                    new_state[cache_a].append(video_b)
-                    new_state[cache_b].append(video_a)
-                    
-                    neighbors.append(new_state)
-                    neighbor_count += 1
+                new_state[cache_a].remove(video_a)
+                new_state[cache_b].remove(video_b)
+                new_state[cache_a].append(video_b)
+                new_state[cache_b].append(video_a)
+                
+                change = ("swap", video_a, cache_a, video_b, cache_b)
+                neighbors.append((new_state, change))
+                neighbor_count += 1
+                attempts = 0
         
-        elif operation == 'add' and uncached_videos:
-            # Add an uncached video to a random cache
+        elif operation == 'add':
+            # add a video to cache (keep randomizing until we get non-repeated and non-overflowing video)
             cache = random.choice(cache_ids)
-            video = random.choice(uncached_videos)
-            
+            video = random.randrange(len(video_size))
             new_load = current_loads[cache] + video_size[video]
-            if new_load <= cache_capacity:
+
+            # more than 50 attempts -> invalid
+            attempts = 0
+            while ((video in state[cache]) or new_load > cache_capacity) and attempts < 50:
+                cache = random.choice(cache_ids)
+                video = random.randrange(len(video_size))
+                new_load = current_loads[cache] + video_size[video]
+
+                attempts += 1
+
+            if attempts < 50:
                 new_state = state.copy()
                 new_state[cache] = state[cache].copy()
                 new_state[cache].append(video)
                 
-                neighbors.append(new_state)
+                change = ("add", video, cache)
+                neighbors.append((new_state, change))
                 neighbor_count += 1
+                attempts = 0
         
         elif operation == 'remove':
-            # Remove a video from a random cache
+            # remove a video from a random non-empty cache (that has it)
             cache = random.choice(cache_ids)
-            if cached_videos_by_cache[cache]:
-                video = random.choice(list(cached_videos_by_cache[cache]))
-                
+            attempts = 0
+            while state[cache] == [] or state[cache] == None: 
+                cache = random.choice(cache_ids)
+                attempts += 1
+            video = random.choice(list(state[cache]))
+            
+            while not video in state[cache] and attempts < 50:
+                cache = random.choice(cache_ids)
+                video = random.choice(list(state[cache]))
+
+                attempts += 1
+
+            if attempts < 50:
                 new_state = state.copy()
                 new_state[cache] = state[cache].copy()
                 new_state[cache].remove(video)
                 
-                neighbors.append(new_state)
+                change = ("remove", video, cache)
+                neighbors.append((new_state, change))
                 neighbor_count += 1
+                attempts = 0
     
     return neighbors
