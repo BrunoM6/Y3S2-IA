@@ -55,10 +55,12 @@ def print_genetic_parameters(generations: int, mutation_rate: float, tournament_
   print(f"3 - Tournament Size (current: {tournament_size})")
   print("4 - Resume")
 
-def print_tabu(neighbors_generated_all:bool):
+def print_tabu(neighbors_generated_all:bool, max_iterations: int, tabu_tenure: int):
   print("Change any parameter")
   print(f"1 - Generate all neighbors (current: {neighbors_generated_all})")
-  print("2 - Resume")
+  print(f"2 - Max Iterations (current: {max_iterations})")
+  print(f"3 - Tabu Tenure (current: {tabu_tenure})")
+  print("4 - Resume")
 
 datasets = {1: 'kittens.in.txt', 2: 'me_at_the_zoo.in', 3: 'trending_today.in', 4: 'videos_worth_spreading.in'}
 dataset = 'me_at_the_zoo.in'
@@ -104,7 +106,7 @@ while True:
             initial_temperature=100
             cooling_rate=0.995
             minimum_temperature=1e-4
-            neighbors_generated = 50
+            neighbors_generated = 5
 
             parameter_command = 0
             while parameter_command != 7:
@@ -205,9 +207,11 @@ while True:
 
             parameter_command = 0
             generate_neighbors_all = False
+            max_iterations = 1000
+            tabu_tenure = 8
 
-            while parameter_command != 2:
-                print_tabu(generate_neighbors_all)
+            while parameter_command != 4:
+                print_tabu(generate_neighbors_all, max_iterations, tabu_tenure)
                 parameter_command = int(input("Action:"))
                 
                 match parameter_command:
@@ -219,6 +223,10 @@ while True:
                             generate_neighbors_all = False
                         else:
                             print("Invalid input, please enter 'true' or 'false'.")
+                    case 2:
+                      max_iterations = int(input("New value:"))
+                    case 3:
+                      tabu_tenure = int(input("New value:"))
             if start_position_flag == 1:
               starting_position = get_init_solution(
                 problem_description, 
@@ -239,7 +247,7 @@ while True:
             ax.set_xlabel("X")
             ax.set_ylabel("Y")
             ax.set_title("Tabu Search Solution Mapping")
-            solution = tabu_search(starting_position, video_size, endpoint_data_description, endpoint_cache_description, request_description, problem_description[4],dataset,generate_neighbors_all,ax,fig)
+            solution = tabu_search(starting_position, video_size, endpoint_data_description, endpoint_cache_description, request_description, problem_description[4],dataset,generate_neighbors_all,ax,fig, max_iterations, tabu_tenure)
             fig.canvas.draw()
             plt.show(block=True)
             plt.close("all")

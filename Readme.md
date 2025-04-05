@@ -49,6 +49,7 @@ To provide our solution space with a decent starting position, we apply a greedy
 - Sort these potential placements and greedily assign videos to cache while there is enough capacity based on this.
 - Return the solution.
 Also, in program lifespans where you explore multiple algorithms for the same dataset, the Greedy solution used is the best solution found up to that point with any of the algorithms previously used. We found that this heuristic performs worse on larger caches and better on smaller ones. This is the default starting point used. 
+We noted that this starting point is best for small cache sizes because of the greedy property, and it becomes way too costly without much benefit for large datasets with big cache sizes.
 
 ### Random Point - Comparison Heuristic
 A random starting point from a function defined in our `random.py` file serves as a control group for our algorithms, in which we fill every single cache with a maximal random ammount of videos, respecting the constraints of size. It works like so:
@@ -57,7 +58,7 @@ A random starting point from a function defined in our `random.py` file serves a
 - Keep adding the video until the cache can't take in the next random;
 - Skip to next cache while we have caches to fill;
 - Return the solution.
-This similar starting point can be used to check how these algorithms perform in a balanced scenario. 
+This similar starting point can be used to check how these algorithms perform in a balanced scenario. This starting point is best for large datasets with big caches where we want to mostly perform swaps since all caches are guaranteed to have a lot of videos in the "best" solution.
 
 ### Algorithms
 We explored three different algorithms to solve the problem, simulated annealing, genetic algorithm and tabu search. 
@@ -67,7 +68,6 @@ The annealing algorithm implemented iteratively explores the solution space usin
 Key parameters, including the maximum number of iterations, iterations without improvement, initial temperature, cooling rate, minimum temperature, and the number of generated neighbors per iteration are configurable, enabling fine-tuning for different dataset sizes and performance requirements. This configurability allows the method to be effectively adapted to large-scale problems, such as those involving thousands of videos, numerous endpoints, and a complex network of cache servers. By combining heuristic exploration with adaptive parameter tuning, the algorithm incrementally improves its solution quality, making it a more robust tool. We found that annealing didn't do that well starting from the Greedy Heuristic in smaller cached datasets, since the Greedy starting point was already a local (possible global for the smaller dataset) peak. We also found that this algorithm didn't work too well for large cache sizes and was slower at increasing the score. This is due to the neighbors explored changing only one video at a time, making it so that each iteration is not felt as much since there is much more cache space to distribute.
 
 #### Genetic Algorithm
-
 The genetic algorithm starts out by generating a population whose size is determined by the user. The population's composition consists of three different types of potential solutions:
 
 - **Greedy Approach**: one third of the solutions in the population are the greedy ones calculated using the greedy heuristic in `greedy.py`;

@@ -11,7 +11,7 @@ from visual import update_score
 
 def simulated_annealing(initial_solution: dict, video_size: list, endpoint_data_description: list, 
                          endpoint_cache_description: dict, request_description: dict, cache_capacity: int, dataset: str, ax, fig, 
-                         max_iterations=10000, iterations_without_improvement_cap=500, initial_temperature=1000.0, cooling_rate=0.99, minimum_temperature=1e-4, neighbors_generated=50):
+                         max_iterations=10000, iterations_without_improvement_cap=500, initial_temperature=1000.0, cooling_rate=0.99, minimum_temperature=1e-4, neighbors_generated=5):
     # initialize the directories for results
     dataset_path_scores = os.path.join("scores", dataset)
     os.makedirs(dataset_path_scores, exist_ok=True)
