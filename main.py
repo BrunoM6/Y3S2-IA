@@ -1,4 +1,5 @@
-import os
+import pygame
+import sys
 
 import matplotlib.pyplot as plt
 
@@ -81,262 +82,337 @@ dataset = 'me_at_the_zoo.in'
 problem_description, video_size, endpoint_data_description, endpoint_cache_description, request_description = parse_results(dataset)
 start_position_flag = 1
 
-while True:
-  print_menu()
-
-  # menu commands
-  input_command = int(input("Action:"))
-  match input_command:
-    # choose dataset
-    case 1:
-      dataset_command = 0
-      while (dataset_command != 5):
+def handle_dataset_selection():
+    global dataset, problem_description, video_size, endpoint_data_description, endpoint_cache_description, request_description
+    dataset_command = 0
+    while dataset_command != 5:
         print_datasets()
-        dataset_command = int(input("Dataset:"))
-        if dataset_command in datasets:
-          dataset = datasets[dataset_command]
-          problem_description, video_size, endpoint_data_description, endpoint_cache_description, request_description = parse_results(dataset)
-          break
-    
-    # choose starting point
-    case 2:
-      print_start_menu()
-      start_position_flag = int(input("Starting Point:"))
-      while start_position_flag != 1 and start_position_flag != 2:
+        try:
+            dataset_command = int(input("Dataset:"))
+            if dataset_command in datasets:
+                dataset = datasets[dataset_command]
+                problem_description, video_size, endpoint_data_description, endpoint_cache_description, request_description = parse_results(dataset)
+                break
+        except ValueError:
+            print("Invalid input. Please try again.")
+
+def handle_starting_point_selection():
+    global start_position_flag
+    print_start_menu()
+    start_position_flag = int(input("Starting Point:"))
+    while start_position_flag not in [1, 2]:
         print_start_menu()
         start_position_flag = int(input("Starting Point:"))
 
-    # choose algorithm
-    case 3:
-      algorithm_command = 0
-      while algorithm_command != 4:
+def handle_algorithm_menu():
+    algorithm_command = 0
+    while algorithm_command != 5:
         print_algorithms(dataset)
-        algorithm_command = int(input("Algorithm:"))
-        match algorithm_command:
-          # annealing, with parameter control
-          case 1:
-            max_iterations=1000
-            iterations_without_improvement_cap = 50
-            initial_temperature=100
-            cooling_rate=0.995
-            minimum_temperature=1e-4
-            neighbors_generated = 5
-
-            parameter_command = 0
-            while parameter_command != 7:
-              print_annealing_parameters(max_iterations, iterations_without_improvement_cap, initial_temperature, cooling_rate, minimum_temperature, neighbors_generated)
-              parameter_command = int(input("Action:"))
-              match parameter_command:
+        try:
+            algorithm_command = int(input("Algorithm:"))
+            match algorithm_command:
                 case 1:
-                  max_iterations = int(input("What is the new value you want to set?"))
+                    run_simulated_annealing()
                 case 2:
-                  iterations_without_improvement_cap = int(input("What is the new value you want to set?"))
+                    run_genetic_algorithm()
                 case 3:
-                  initial_temperature = int(input("What is the new value you want to set?"))
+                    run_tabu_search()
                 case 4:
-                  cooling_rate = float(input("What is the new value you want to set?"))
+                    run_hill_climb()
                 case 5:
-                  minimum_temperature = float(input("What is the new value you want to set?"))
-                case 6:
-                  neighbors_generated = int(input("What is the new value you want to set?"))
+                    print("Returning to main menu.")
+        except ValueError:
+            print("Invalid input.")
 
-            # get the correct starting position depending on flag
-            starting_position = {}
-            if start_position_flag == 1:
-              starting_position = get_init_solution(
-                problem_description, 
-                video_size, 
-                dataset,
-                'annealing',
-                endpoint_data_description,
-                endpoint_cache_description,
-                request_description
-              )
-            elif start_position_flag == 2:
-              starting_position = random_start(problem_description, video_size)
 
-            fig, ax = plt.subplots()
-            ax.set_xlabel("iteration")
-            ax.set_ylabel("score")
-            ax.set_title("Simulated Annealing Solution Mapping")
-            solution = simulated_annealing(starting_position, video_size, endpoint_data_description, 
-                                endpoint_cache_description, request_description, problem_description[4], dataset, ax, fig, 
-                                max_iterations, initial_temperature, cooling_rate, neighbors_generated)
-          
-            fig.canvas.draw()
-            plt.show(block=True)
-            plt.close("all")
-          # genetic, with parameter control
-          case 2:
-            generations=1000
-            mutation_rate=0.1
-            tournament_size=5
-            population_size=66
+def get_starting_position(algorithm_name):
+    if start_position_flag == 1:
+        return get_init_solution(
+            problem_description,
+            video_size,
+            dataset,
+            algorithm_name,
+            endpoint_data_description,
+            endpoint_cache_description,
+            request_description
+        )
+    else:
+        return random_start(problem_description, video_size)
+def run_hill_climb():
+    max_iterations = 1000
+    max_neighbors = 500
+    show_plot = False
 
-            parameter_command = 0
-            while parameter_command != 5:
-              print_genetic_parameters(generations, mutation_rate, tournament_size)
-              parameter_command = int(input("Action:"))
-              match parameter_command:
-                case 1:
-                  generations = int(input("What is the new value you want to set?"))
-                case 2:
-                  mutation_rate = float(input("What is the new value you want to set?"))
-                case 3:
-                  tournament_size = int(input("What is the new value you want to set?"))
-                case 4:
-                  population_size = int(input("What is the new value you want to set?"))
-            
-            # get the correct starting position depending on flag
-            starting_position = {}
-            if start_position_flag == 1:
-              starting_position = get_init_solution(
-                problem_description, 
-                video_size, 
-                dataset,
-                'genetic',
-                endpoint_data_description,
-                endpoint_cache_description,
-                request_description
-              )
-            elif start_position_flag == 2:
-              starting_position = random_start(problem_description, video_size)
-            
-            population = generate_population(starting_position, population_size, dataset)
-            solution = genetic_algorithm(
-              population, 
-              generations, 
-              lambda solution: score(solution, endpoint_data_description, endpoint_cache_description, request_description),
-              "./genetic",
-              video_size,
-              problem_description,
-              mutation_rate,
-              tournament_size
-              )
+    parameter_command = 0
+    while parameter_command != 4:
+        print_hillclimb(max_iterations, max_neighbors, show_plot)
+        parameter_command = int(input("Action:"))
+        match parameter_command:
+            case 1:
+                max_iterations = int(input("New value:"))
+            case 2:
+                max_neighbors = int(input("New value:"))
+            case 3:
+                show_plot = input("True/False:").strip().lower() == "true"
 
-          # tabu
-          case 3: 
-            starting_position = {}
-            # get the correct starting position
+    starting_position = get_starting_position('hill_climb')
 
-            parameter_command = 0
-            generate_neighbors_all = False
-            max_iterations = 1000
-            tabu_tenure = 8
-            max_neighbors = 500
-            show_plot = False
-            it_without_improvement = 50
+    if show_plot:
+        fig, ax = plt.subplots()
+        ax.set_xlabel("X")
+        ax.set_ylabel("Y")
+        ax.set_title("Hill Climbing Solution Mapping")
+        solution = hill_climb(starting_position, video_size, endpoint_data_description, endpoint_cache_description,
+                              request_description, problem_description[4], dataset, max_iterations, max_neighbors, show_plot, ax, fig)
+        fig.canvas.draw()
+        plt.show(block=True)
+        plt.close("all")
+    else:
+        solution = hill_climb(starting_position, video_size, endpoint_data_description, endpoint_cache_description,
+                              request_description, problem_description[4], dataset, max_iterations, max_neighbors, show_plot)
+def run_tabu_search():
+    generate_neighbors_all = False
+    max_iterations = 1000
+    tabu_tenure = 8
+    max_neighbors = 500
+    show_plot = False
+    it_without_improvement = 50
 
-            while parameter_command != 7:
-                print_tabu(generate_neighbors_all, max_iterations, tabu_tenure,max_neighbors,show_plot,it_without_improvement)
-                parameter_command = int(input("Action:"))
-                
-                match parameter_command:
-                    case 1:
-                        user_input = input("Write true or false: ").strip().lower()
-                        if user_input == "true":
-                            generate_neighbors_all = True
-                        elif user_input == "false":
-                            generate_neighbors_all = False
-                        else:
-                            print("Invalid input, please enter 'true' or 'false'.")
-                    case 2:
-                      max_iterations = int(input("New value:"))
-                    case 3:
-                      tabu_tenure = int(input("New value:"))
-                    case 4:
-                      max_neighbors = int(input("New value:"))
-                    case 5:
-                      it_without_improvement = int(input("New value:"))
-                    case 6:
-                        user_input = input("Write true or false: ").strip().lower()
-                        if user_input == "true":
-                            show_plot = True
-                        elif user_input == "false":
-                            show_plot = False
-                        else:
-                            print("Invalid input, please enter 'true' or 'false'.")
-            if start_position_flag == 1:
-              starting_position = get_init_solution(
-                problem_description, 
-                video_size, 
-                dataset,
-                'tabu',
-                endpoint_data_description,
-                endpoint_cache_description,
-                request_description
-              )
-            elif start_position_flag == 2:
-              starting_position = random_start(problem_description, video_size)
+    parameter_command = 0
+    while parameter_command != 7:
+        print_tabu(generate_neighbors_all, max_iterations, tabu_tenure, max_neighbors, show_plot, it_without_improvement)
+        parameter_command = int(input("Action:"))
+        match parameter_command:
+            case 1:
+                generate_neighbors_all = input("True/False:").strip().lower() == "true"
+            case 2:
+                max_iterations = int(input("New value:"))
+            case 3:
+                tabu_tenure = int(input("New value:"))
+            case 4:
+                max_neighbors = int(input("New value:"))
+            case 5:
+                it_without_improvement = int(input("New value:"))
+            case 6:
+                show_plot = input("True/False:").strip().lower() == "true"
 
-            if show_plot:
-                fig, ax = plt.subplots()
-                ax.set_xlim(-1, 1)
-                ax.set_ylim(-1, 1)
-                ax.set_xlabel("X")
-                ax.set_ylabel("Y")
-                ax.set_title("Tabu Search Solution Mapping")
-                solution = tabu_search(starting_position, video_size, endpoint_data_description, endpoint_cache_description, request_description, problem_description[4],dataset,generate_neighbors_all,max_neighbors, max_iterations,it_without_improvement, tabu_tenure,show_plot,ax,fig)
-                fig.canvas.draw()
-                plt.show(block=True)
-                plt.close("all")
-            else:
-                            solution = tabu_search(starting_position, video_size, endpoint_data_description, endpoint_cache_description, request_description, problem_description[4],dataset,generate_neighbors_all,max_neighbors, max_iterations,it_without_improvement, tabu_tenure,show_plot)
-            
-    
-          case 4:
+    starting_position = get_starting_position('tabu')
 
-            starting_position = {}
-            parameter_command = 0
-            generate_neighbors_all = False
-            max_iterations = 1000
-            max_neighbors = 500
-            show_plot = False
+    if show_plot:
+        fig, ax = plt.subplots()
+        ax.set_xlabel("X")
+        ax.set_ylabel("Y")
+        ax.set_title("Tabu Search Solution Mapping")
+        solution = tabu_search(starting_position, video_size, endpoint_data_description, endpoint_cache_description,
+                               request_description, problem_description[4], dataset, generate_neighbors_all,
+                               max_neighbors, max_iterations, it_without_improvement, tabu_tenure, show_plot, ax, fig)
+        fig.canvas.draw()
+        plt.show(block=True)
+        plt.close("all")
+    else:
+        solution = tabu_search(starting_position, video_size, endpoint_data_description, endpoint_cache_description,
+                               request_description, problem_description[4], dataset, generate_neighbors_all,
+                               max_neighbors, max_iterations, it_without_improvement, tabu_tenure, show_plot)
+def run_genetic_algorithm():
+    generations = 1000
+    mutation_rate = 0.1
+    tournament_size = 5
+    population_size = 66
 
-            while parameter_command != 4:
-                print_hillclimb( max_iterations, max_neighbors,show_plot)
-                parameter_command = int(input("Action:"))
-                
-                match parameter_command:
-                    case 1:
-                        max_iterations = int(input("New value:"))
-                    case 2:
-                        max_neighbors = int(input("New value:"))
-                    case 3:
-                        user_input = input("Write true or false: ").strip().lower()
-                        if user_input == "true":
-                            show_plot = True
-                        elif user_input == "false":
-                            show_plot = False
-                        else:
-                            print("Invalid input, please enter 'true' or 'false'.")
-            if start_position_flag == 1:
-                starting_position = get_init_solution(
-                    problem_description,
-                    video_size,
-                    dataset,
-                    'hill_climb',
-                    endpoint_data_description,
-                    endpoint_cache_description,
-                    request_description
-                )
-            elif start_position_flag == 2:
-                starting_position = random_start(problem_description, video_size)
+    parameter_command = 0
+    while parameter_command != 5:
+        print_genetic_parameters(generations, mutation_rate, tournament_size)
+        parameter_command = int(input("Action:"))
+        match parameter_command:
+            case 1:
+                generations = int(input("New value:"))
+            case 2:
+                mutation_rate = float(input("New value:"))
+            case 3:
+                tournament_size = int(input("New value:"))
+            case 4:
+                population_size = int(input("New value:"))
 
-            if show_plot:
-                fig, ax = plt.subplots()
-                ax.set_xlim(-1, 1)
-                ax.set_ylim(-1, 1)
-                ax.set_xlabel("X")
-                ax.set_ylabel("Y")
-                ax.set_title("Hill Climbing Solution Mapping")
-                solution = hill_climb( starting_position, video_size, endpoint_data_description, endpoint_cache_description, request_description, problem_description[4], dataset, max_iterations, max_neighbors, show_plot, ax, fig)
-                fig.canvas.draw()
-                plt.show(block=True)
-                plt.close("all")
-            solution = hill_climb( starting_position, video_size, endpoint_data_description, endpoint_cache_description, request_description, problem_description[4], dataset, max_iterations, max_neighbors, show_plot)
-          case 5: break
-    case 4:
-      break
+    starting_position = get_starting_position('genetic')
+    population = generate_population(starting_position, population_size, dataset)
 
+    solution = genetic_algorithm(
+        population,
+        generations,
+        lambda solution: score(solution, endpoint_data_description, endpoint_cache_description, request_description),
+        "./genetic",
+        video_size,
+        problem_description,
+        mutation_rate,
+        tournament_size
+    )
+
+def run_simulated_annealing():
+    # Parameters
+    max_iterations = 1000
+    iterations_without_improvement_cap = 50
+    initial_temperature = 100
+    cooling_rate = 0.995
+    minimum_temperature = 1e-4
+    neighbors_generated = 5
+
+    parameter_command = 0
+    while parameter_command != 7:
+        print_annealing_parameters(max_iterations, iterations_without_improvement_cap,
+                                   initial_temperature, cooling_rate, minimum_temperature, neighbors_generated)
+        parameter_command = int(input("Action:"))
+        match parameter_command:
+            case 1:
+                max_iterations = int(input("New value:"))
+            case 2:
+                iterations_without_improvement_cap = int(input("New value:"))
+            case 3:
+                initial_temperature = int(input("New value:"))
+            case 4:
+                cooling_rate = float(input("New value:"))
+            case 5:
+                minimum_temperature = float(input("New value:"))
+            case 6:
+                neighbors_generated = int(input("New value:"))
+
+    starting_position = get_starting_position('annealing')
+
+    fig, ax = plt.subplots()
+    ax.set_xlabel("iteration")
+    ax.set_ylabel("score")
+    ax.set_title("Simulated Annealing Solution Mapping")
+
+    solution = simulated_annealing(
+        starting_position, video_size, endpoint_data_description,
+        endpoint_cache_description, request_description,
+        problem_description[4], dataset, ax, fig,
+        max_iterations, initial_temperature, cooling_rate,
+        neighbors_generated
+    )
+
+    fig.canvas.draw()
+    plt.show(block=True)
+    plt.close("all")
+
+
+
+
+
+
+def main_loop():
+    while True:
+        print_menu()
+        try:
+            input_command = int(input("Action:"))
+        except ValueError:
+            print("Please enter a valid number.")
+            continue
+
+        match input_command:
+            case 1:
+                handle_dataset_selection()
+            case 2:
+                handle_starting_point_selection()
+            case 3:
+                handle_algorithm_menu()
+            case 4:
+                print("Exited successfully :D")
+                break
+
+
+import pygame
+import sys
+
+pygame.init()
+
+# Config
+WIDTH, HEIGHT = 800, 600
+WHITE, GRAY, BLUE = (255, 255, 255), (200, 200, 200), (0, 150, 255)
+font = pygame.font.SysFont(None, 36)
+
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Optimization Solver")
+
+# State management
+current_screen = "main_menu"
+
+# Generic Button class
+class Button:
+    def __init__(self, text, x, y, w, h, callback):
+        self.text = text
+        self.rect = pygame.Rect(x, y, w, h)
+        self.callback = callback
+
+    def draw(self, surface):
+        pygame.draw.rect(surface, GRAY, self.rect, border_radius=10)
+        txt = font.render(self.text, True, (0, 0, 0))
+        surface.blit(txt, (self.rect.x + 10, self.rect.y + 10))
+
+    def handle_event(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN and self.rect.collidepoint(event.pos):
+            self.callback()
+
+# Callbacks for navigation
+def go_to_algorithm_menu():
+    global current_screen
+    current_screen = "algorithm_menu"
+
+def go_back():
+    global current_screen
+    current_screen = "main_menu"
+
+def exit_game():
+    pygame.quit()
+    sys.exit()
+
+# Placeholder for each algorithm selection
+def pick_algorithm(name):
+    print(f"Selected algorithm: {name}")
+    # Here you'd change state to show sliders for the selected algorithm
+
+# Main menu buttons
+main_buttons = [
+    Button("Select Dataset", 250, 150, 300, 50, lambda: print("Dataset menu coming soon")),
+    Button("Select Starting Point", 250, 220, 300, 50, lambda: print("Starting point menu coming soon")),
+    Button("Choose Algorithm", 250, 290, 300, 50, go_to_algorithm_menu),
+    Button("Exit", 250, 360, 300, 50, exit_game)
+]
+
+# Algorithm selection screen
+algo_buttons = [
+    Button("Simulated Annealing", 250, 120, 300, 50, lambda: pick_algorithm("annealing")),
+    Button("Genetic Algorithm", 250, 190, 300, 50, lambda: pick_algorithm("genetic")),
+    Button("Tabu Search", 250, 260, 300, 50, lambda: pick_algorithm("tabu")),
+    Button("Hill Climbing", 250, 330, 300, 50, lambda: pick_algorithm("hill_climbing")),
+    Button("Back", 250, 420, 300, 50, go_back)
+]
+
+# Main loop
+def run_menu():
+    while True:
+        screen.fill(WHITE)
+
+        # Events
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                exit_game()
+
+            if current_screen == "main_menu":
+                for b in main_buttons:
+                    b.handle_event(event)
+            elif current_screen == "algorithm_menu":
+                for b in algo_buttons:
+                    b.handle_event(event)
+
+        # Draw UI
+        if current_screen == "main_menu":
+            for b in main_buttons:
+                b.draw(screen)
+        elif current_screen == "algorithm_menu":
+            for b in algo_buttons:
+                b.draw(screen)
+
+        pygame.display.flip()
+
+run_menu()
 print("Exited sucessfully :D")
