@@ -10,7 +10,7 @@ from get_neighbours import get_neighbors_all
 from get_neighbours import state_to_key
 from visual import update_plot_batch
 
-def tabu_search(initial_solution: dict, video_size: list, endpoint_data_description: list, endpoint_cache_description: dict, request_description: dict, cache_capacity: int,dataset: str,get_all:bool,ax,fig, max_iterations=1000, tabu_tenure=8):
+def tabu_search(initial_solution: dict, video_size: list, endpoint_data_description: list, endpoint_cache_description: dict, request_description: dict, cache_capacity: int,dataset: str,get_all:bool,ax,fig,max_neighbors, max_iterations=1000, tabu_tenure=8):
     
     folder_path_scores = "results/"+dataset+"/tabu"
     folder_path = "scores/" + dataset  
@@ -61,7 +61,7 @@ def tabu_search(initial_solution: dict, video_size: list, endpoint_data_descript
             
             if(get_all):
                 # **Step 1: Generate all neighbors**
-                for neighbor in get_neighbors_all(best, video_size,  cache_capacity):
+                for neighbor in get_neighbors_all(best, video_size,  cache_capacity,max_neighbors):
                     # prev_solution = update_plot(best, neighbor, solution_positions, ax, fig, prev_solution)
                     neighbor_score = score(neighbor, endpoint_data_description, endpoint_cache_description, request_description)
                     candidate_list.append((neighbor, neighbor_score))
