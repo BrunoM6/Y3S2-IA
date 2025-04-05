@@ -1,16 +1,14 @@
 import os
-
-from parse import parse_results
-from get_solutions import get_init_solution
-from random_start import random_start
-
+import matplotlib.pyplot as plt
 from annealing import simulated_annealing
-from population import generate_population
 from genetic import genetic_algorithm
+from get_solutions import get_init_solution
+from parse import parse_results
+from population import generate_population
+from random_start import random_start
 from score_functions import score
 from tabu import tabu_search
 
-from visual import update_plot
 
 def print_menu():
   print("Assignment 1 - T12G6")
@@ -57,6 +55,11 @@ def print_genetic_parameters(generations: int, mutation_rate: float, tournament_
   print(f"2 - Mutation Rate (current: {mutation_rate})")
   print(f"3 - Tournament Size (current: {tournament_size})")
   print("4 - Resume")
+
+def print_tabu(neighbors_generated_all:bool):
+  print("Change any parameter")
+  print(f"1 - Generate all neighbors (current: {neighbors_generated_all})")
+  print("2 - Resume")
 
 datasets = {1: 'kittens.in.txt', 2: 'me_at_the_zoo.in', 3: 'trending_today.in', 4: 'videos_worth_spreading.in'}
 dataset = 'me_at_the_zoo.in'
@@ -123,6 +126,7 @@ while True:
                   neighbors_generated = int(input("What is the new value you want to set?"))
 
             # get the correct starting position depending on flag
+            starting_position = {}
             if start_position_flag == 1:
               starting_position = get_init_solution(
                 problem_description, 
@@ -136,10 +140,19 @@ while True:
             elif start_position_flag == 2:
               starting_position = random_start(problem_description, video_size)
 
+            # fig, ax = plt.subplots()
+            # ax.set_xlim(-1, 1)
+            # ax.set_ylim(-1, 1)
+            # ax.set_xlabel("X")
+            # ax.set_ylabel("Y")
+            # ax.set_title("Tabu Search Solution Mapping")
             solution = simulated_annealing(starting_position, video_size, endpoint_data_description, 
-                                endpoint_cache_description, request_description, problem_description[4], dataset, 
+                                endpoint_cache_description, request_description, problem_description[4], dataset,
                                 max_iterations, initial_temperature, cooling_rate, neighbors_generated)
           
+            # fig.canvas.draw()
+            # plt.show(block=True)
+            # plt.close("all")
           # genetic, with parameter control
           case 2:
             generations=1000
@@ -149,7 +162,7 @@ while True:
 
             parameter_command = 0
             while parameter_command != 5:
-              print_genetic_parameters(generations, mutation_rate, tournament_size, population_size)
+              print_genetic_parameters(generations, mutation_rate, tournament_size)
               parameter_command = int(input("Action:"))
               match parameter_command:
                 case 1:
@@ -162,6 +175,7 @@ while True:
                   population_size = int(input("What is the new value you want to set?"))
             
             # get the correct starting position depending on flag
+            starting_position = {}
             if start_position_flag == 1:
               starting_position = get_init_solution(
                 problem_description, 
@@ -186,7 +200,25 @@ while True:
 
           # tabu
           case 3: 
+            starting_position = {}
             # get the correct starting position
+
+            parameter_command = 0
+            generate_neighbors_all = False
+
+            while parameter_command != 2:
+                print_tabu(generate_neighbors_all)
+                parameter_command = int(input("Action:"))
+                
+                match parameter_command:
+                    case 1:
+                        user_input = input("Write true or false: ").strip().lower()
+                        if user_input == "true":
+                            generate_neighbors_all = True
+                        elif user_input == "false":
+                            generate_neighbors_all = False
+                        else:
+                            print("Invalid input, please enter 'true' or 'false'.")
             if start_position_flag == 1:
               starting_position = get_init_solution(
                 problem_description, 
@@ -200,7 +232,9 @@ while True:
             elif start_position_flag == 2:
               starting_position = random_start(problem_description, video_size)
 
-            solution = tabu_search(starting_position, video_size, endpoint_data_description, endpoint_cache_description, request_description, problem_description[4])
+
+            solution_positions = {}
+            solution = tabu_search(starting_position, video_size, endpoint_data_description, endpoint_cache_description, request_description, problem_description[4],dataset,generate_neighbors_all)
 
     # display data
     case 4:

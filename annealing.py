@@ -6,20 +6,23 @@ import re
 import math
 
 from get_neighbours import get_neighbors, get_neighbors_all, state_to_key, get_optimized_neighbors
-from get_solutions import get_init_solution
-from parse import parse_results
 from score_functions import score
+from visual import update_plot
 
 
 
 def simulated_annealing(initial_solution: dict, video_size: list, endpoint_data_description: list, 
                          endpoint_cache_description: dict, request_description: dict, cache_capacity: int, dataset: str,
-                         max_iterations=10000, iterations_without_improvement_cap=500, initial_temperature=1000, cooling_rate=0.99, minimum_temperature=1e-4, neighbors_generated=50):
+                         max_iterations=10000, iterations_without_improvement_cap=500, initial_temperature=1000.0, cooling_rate=0.99, minimum_temperature=1e-4, neighbors_generated=50):
     # initialize the directories for results
     dataset_path_scores = os.path.join("scores", dataset)
     os.makedirs(dataset_path_scores, exist_ok=True)
-    dataset_path_results = os.path.join("results", dataset)
+    dataset_path_results = os.path.join("results", dataset,"annealing")
     os.makedirs(dataset_path_results, exist_ok=True)
+    print(dataset_path_results)
+    print(dataset_path_scores)
+    previous = {}
+    solution_positions = {}
     
     # find highest solution number
     max_json_number = 0
@@ -82,6 +85,7 @@ def simulated_annealing(initial_solution: dict, video_size: list, endpoint_data_
             if delta_score > 0 or random.random() < math.exp(delta_score / temperature):
                 current_solution = neighbor
                 current_score = neighbor_score
+                previous = update_plot(neighbor, neighbor, solution_positions, ax, fig, previous)
                 
                 # check for improvement and save
                 if current_score >= best_score:

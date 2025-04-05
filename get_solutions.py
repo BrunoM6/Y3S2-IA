@@ -51,8 +51,9 @@ def get_init_solution(problem_description, video_size, dataset, algorithm, endpo
     
     # get best of the previous scores, if there aren't any, use the greedy heuristic score
     csv_path = os.path.join("scores", dataset, f'{algorithm}.csv')
-    results_path = os.path.join("results", dataset)
+    results_path = os.path.join("results", dataset,algorithm)
     best_stored_solution, best_stored_score = get_best_stored_solution(csv_path, results_path)
+
 
     if best_stored_solution is not None and isinstance(best_stored_score, (int, float)) and best_stored_score >= greedy_score:
         return best_stored_solution  # use the best stored solution associated with the best score
