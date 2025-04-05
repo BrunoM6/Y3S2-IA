@@ -234,7 +234,16 @@ while True:
 
 
             solution_positions = {}
-            solution = tabu_search(starting_position, video_size, endpoint_data_description, endpoint_cache_description, request_description, problem_description[4],dataset,generate_neighbors_all)
+            fig, ax = plt.subplots()
+            ax.set_xlim(-1, 1)
+            ax.set_ylim(-1, 1)
+            ax.set_xlabel("X")
+            ax.set_ylabel("Y")
+            ax.set_title("Tabu Search Solution Mapping")
+            solution = tabu_search(starting_position, video_size, endpoint_data_description, endpoint_cache_description, request_description, problem_description[4],dataset,generate_neighbors_all,ax,fig)
+            fig.canvas.draw()
+            plt.show(block=True)
+            plt.close("all")
 
     # display data
     case 4:

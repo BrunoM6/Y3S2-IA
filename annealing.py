@@ -7,7 +7,6 @@ import math
 
 from get_neighbours import get_neighbors, get_neighbors_all, state_to_key, get_optimized_neighbors
 from score_functions import score
-from visual import update_plot
 
 
 
@@ -85,7 +84,6 @@ def simulated_annealing(initial_solution: dict, video_size: list, endpoint_data_
             if delta_score > 0 or random.random() < math.exp(delta_score / temperature):
                 current_solution = neighbor
                 current_score = neighbor_score
-                previous = update_plot(neighbor, neighbor, solution_positions, ax, fig, previous)
                 
                 # check for improvement and save
                 if current_score >= best_score:

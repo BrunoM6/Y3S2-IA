@@ -9,9 +9,9 @@ from score_functions import score
 from get_neighbours import get_neighbors
 from get_neighbours import get_neighbors_all
 from get_neighbours import state_to_key
-from visual import update_plot
+from visual import update_plot_batch
 
-def tabu_search(initial_solution: dict, video_size: list, endpoint_data_description: list, endpoint_cache_description: dict, request_description: dict, cache_capacity: int,dataset: str,get_all:bool, max_iterations=1000, tabu_tenure=8):
+def tabu_search(initial_solution: dict, video_size: list, endpoint_data_description: list, endpoint_cache_description: dict, request_description: dict, cache_capacity: int,dataset: str,get_all:bool,ax,fig, max_iterations=1000, tabu_tenure=8):
     
     folder_path_scores = "results/"+dataset+"/tabu"
     folder_path = "scores/" + dataset  
@@ -117,6 +117,15 @@ def tabu_search(initial_solution: dict, video_size: list, endpoint_data_descript
             csv_writer.writerow(["TabuSearch", solution_id, best_score])
             csvfile.flush()  
     
+            neighbor_edges = []  # Store tuples (current_solution, neighbor)
+            plotted_solutions = set()
+
+            for idx, neighbor in enumerate(get_neighbors_all(best, video_size, cache_capacity)):
+                neighbor_edges.append((best, neighbor))
+                
+                if idx % 300 == 0:  # Adjust this number as needed for performance
+                    update_plot_batch(neighbor_edges, solution_positions, ax, fig, plotted_solutions)
+                    neighbor_edges.clear()  # Clear edges after drawing
     if best_score > int(initial_score):
         print(best_score)
         return best 
