@@ -9,7 +9,7 @@ from score_functions import score
 from visual import update_plot_batch
 
 
-def tabu_search(initial_solution: dict, video_size: list, endpoint_data_description: list, endpoint_cache_description: dict, request_description: dict, cache_capacity: int,dataset: str,get_all:bool,max_neighbors, max_iterations, tabu_tenure,show_plot,ax=None,fig=None):
+def tabu_search(initial_solution: dict, video_size: list, endpoint_data_description: list, endpoint_cache_description: dict, request_description: dict, cache_capacity: int,dataset: str,get_all:bool,max_neighbors, max_iterations,iteration_without_improvement, tabu_tenure,show_plot,ax=None,fig=None):
     
     folder_path_scores = "results/"+dataset+"/tabu"
     folder_path = "scores/" + dataset  
@@ -35,8 +35,6 @@ def tabu_search(initial_solution: dict, video_size: list, endpoint_data_descript
     best = initial_solution
     best_score = score(initial_solution, endpoint_data_description, endpoint_cache_description, request_description)
     initial_score = best_score
-    print(initial_score)
-    print(initial_solution)
     solution_id = ""
     neighbors = []
     
@@ -47,7 +45,7 @@ def tabu_search(initial_solution: dict, video_size: list, endpoint_data_descript
         if(not os.path.exists(folder_path_scores)):
             csv_writer.writerow(["algorithm", "solution_id", "score"])
         prev_solution = {} 
-        while iteration < max_iterations and iterations_without_improvement < 50:  
+        while iteration < max_iterations and iterations_without_improvement < iteration_without_improvement:  
             iteration += 1
             # print(iterations_without_improvement)
 

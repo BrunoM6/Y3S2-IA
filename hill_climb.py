@@ -39,10 +39,10 @@ def hill_climb(initial_solution: dict, video_size: list, endpoint_data_descripti
         solution_path = os.path.join(dataset_path_results, solution_id)
         with open(solution_path, "w") as sol_file:
             json.dump(current_solution, sol_file)
-        csv_writer.writerow(["SimulatedAnnealing", solution_id, current_score])
+        csv_writer.writerow(["HillClimb", solution_id, current_score])
         csvfile.flush()
         
-        if not os.path.exists(os.path.join(dataset_path_scores, "annealing.csv")) or os.path.getsize(os.path.join(dataset_path_scores, "annealing.csv")) == 0:  # check if the folder is empty
+        if not os.path.exists(os.path.join(dataset_path_scores, "hillclimb.csv")) or os.path.getsize(os.path.join(dataset_path_scores, "hillclimb.csv")) == 0:  # check if the folder is empty
                 csv_writer.writerow(["algorithm", "solution_id", "score"])
         
         for iteration in range(1, max_iterations + 1):          

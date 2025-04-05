@@ -59,14 +59,15 @@ def print_genetic_parameters(generations: int, mutation_rate: float, tournament_
   print(f"3 - Tournament Size (current: {tournament_size})")
   print("4 - Resume")
 
-def print_tabu(neighbors_generated_all:bool, max_iterations: int, tabu_tenure: int,max_neighbors:int,plot:bool):
+def print_tabu(neighbors_generated_all:bool, max_iterations: int, tabu_tenure: int,max_neighbors:int,plot:bool,it_without_improvement:int):
   print("Change any parameter")
   print(f"1 - Generate all neighbors (current: {neighbors_generated_all})")
   print(f"2 - Max Iterations (current: {max_iterations})")
   print(f"3 - Tabu Tenure (current: {tabu_tenure})")
   print(f"4 - Max_neighbors (current: {max_neighbors})")
-  print(f"5 - Show plots (current: {plot})")
-  print("6 - Resume")
+  print(f"5 - Iterations without improvement (current: {it_without_improvement})")
+  print(f"6 - Show plots (current: {plot})")
+  print("7 - Resume")
 
 def print_hillclimb( max_iterations: int, max_neighbors: int,show_plot:bool):
   print("Change any parameter")
@@ -224,9 +225,10 @@ while True:
             tabu_tenure = 8
             max_neighbors = 500
             show_plot = False
+            it_without_improvement = 50
 
-            while parameter_command != 6:
-                print_tabu(generate_neighbors_all, max_iterations, tabu_tenure,max_neighbors,show_plot)
+            while parameter_command != 7:
+                print_tabu(generate_neighbors_all, max_iterations, tabu_tenure,max_neighbors,show_plot,it_without_improvement)
                 parameter_command = int(input("Action:"))
                 
                 match parameter_command:
@@ -243,8 +245,10 @@ while True:
                     case 3:
                       tabu_tenure = int(input("New value:"))
                     case 4:
-                      tabu_tenure = int(input("New value:"))
+                      max_neighbors = int(input("New value:"))
                     case 5:
+                      it_without_improvement = int(input("New value:"))
+                    case 6:
                         user_input = input("Write true or false: ").strip().lower()
                         if user_input == "true":
                             show_plot = True
@@ -272,12 +276,13 @@ while True:
                 ax.set_xlabel("X")
                 ax.set_ylabel("Y")
                 ax.set_title("Tabu Search Solution Mapping")
-                solution = tabu_search(starting_position, video_size, endpoint_data_description, endpoint_cache_description, request_description, problem_description[4],dataset,generate_neighbors_all,max_neighbors, max_iterations, tabu_tenure,show_plot,ax,fig)
+                solution = tabu_search(starting_position, video_size, endpoint_data_description, endpoint_cache_description, request_description, problem_description[4],dataset,generate_neighbors_all,max_neighbors, max_iterations,it_without_improvement, tabu_tenure,show_plot,ax,fig)
                 fig.canvas.draw()
                 plt.show(block=True)
                 plt.close("all")
             else:
-                solution = tabu_search(starting_position, video_size, endpoint_data_description, endpoint_cache_description, request_description, problem_description[4],dataset,generate_neighbors_all,max_neighbors, max_iterations, tabu_tenure,show_plot)
+                            solution = tabu_search(starting_position, video_size, endpoint_data_description, endpoint_cache_description, request_description, problem_description[4],dataset,generate_neighbors_all,max_neighbors, max_iterations,it_without_improvement, tabu_tenure,show_plot)
+            
     
           case 4:
 
@@ -297,7 +302,6 @@ while True:
                         max_iterations = int(input("New value:"))
                     case 2:
                         max_neighbors = int(input("New value:"))
-
                     case 3:
                         user_input = input("Write true or false: ").strip().lower()
                         if user_input == "true":
@@ -331,6 +335,7 @@ while True:
                 plt.show(block=True)
                 plt.close("all")
             solution = hill_climb( starting_position, video_size, endpoint_data_description, endpoint_cache_description, request_description, problem_description[4], dataset, max_iterations, max_neighbors, show_plot)
+          case 5: break
     case 4:
       break
 
