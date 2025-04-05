@@ -5,23 +5,18 @@ import random
 import re
 import math
 
-from get_neighbours import get_neighbors, get_neighbors_all, state_to_key, get_optimized_neighbors
+from get_neighbours import get_optimized_neighbors
 from score_functions import score
-
-
+from visual import update_score
 
 def simulated_annealing(initial_solution: dict, video_size: list, endpoint_data_description: list, 
-                         endpoint_cache_description: dict, request_description: dict, cache_capacity: int, dataset: str,
+                         endpoint_cache_description: dict, request_description: dict, cache_capacity: int, dataset: str, ax, fig, 
                          max_iterations=10000, iterations_without_improvement_cap=500, initial_temperature=1000.0, cooling_rate=0.99, minimum_temperature=1e-4, neighbors_generated=50):
     # initialize the directories for results
     dataset_path_scores = os.path.join("scores", dataset)
     os.makedirs(dataset_path_scores, exist_ok=True)
     dataset_path_results = os.path.join("results", dataset,"annealing")
     os.makedirs(dataset_path_results, exist_ok=True)
-    print(dataset_path_results)
-    print(dataset_path_scores)
-    previous = {}
-    solution_positions = {}
     
     # find highest solution number
     max_json_number = 0
@@ -43,7 +38,6 @@ def simulated_annealing(initial_solution: dict, video_size: list, endpoint_data_
     # initialize tracking variables for algorithm
     temperature = initial_temperature
     iterations_without_improvement = 0
-    score_cache = {}
 
     with open(os.path.join(dataset_path_scores, "annealing.csv"), "a", newline="") as csvfile:
         csv_writer = csv.writer(csvfile)
@@ -70,25 +64,27 @@ def simulated_annealing(initial_solution: dict, video_size: list, endpoint_data_
             if not neighbors:
                 continue
             
-            # use neighbor cache to avoid using score unnecessarily
-            neighbor, change = random.choice(neighbors)
-            neighbor_key = state_to_key(neighbor)
-            if neighbor_key in score_cache:
-                neighbor_score = score_cache[neighbor_key]
-            else:
-                neighbor_score = score(neighbor, endpoint_data_description, endpoint_cache_description, request_description, current_solution, current_score, change)
-                score_cache[neighbor_key] = neighbor_score
+            # pick the best neighbor
+            best_neighbor_score = 0
+            for neighbor, change in neighbors:
+                new_score = score(neighbor, endpoint_data_description, endpoint_cache_description, request_description, current_solution, current_score, change)
+                if new_score > best_neighbor_score:
+                    best_neighbor = neighbor
+                    best_neighbor_score = new_score
             
             # get the delta and act accordingly
-            delta_score = neighbor_score - current_score
+            delta_score = best_neighbor_score - current_score
             if delta_score > 0 or random.random() < math.exp(delta_score / temperature):
-                current_solution = neighbor
-                current_score = neighbor_score
+                current_solution = best_neighbor
+                current_score = best_neighbor_score
                 
                 # check for improvement and save
                 if current_score >= best_score:
                     best_solution = current_solution
                     best_score = current_score
+
+                # plot new solution
+                update_score((max_json_number + iteration, current_score), ax, fig)
 
                 # log the state
                 solution_id = f"solution_{max_json_number + iteration}.json"

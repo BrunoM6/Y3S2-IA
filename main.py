@@ -15,8 +15,7 @@ def print_menu():
   print("1 - Choose a dataset")
   print("2 - Choose a starting point")
   print("3 - Run an algorithm")
-  print("4 - Visualize your results")
-  print("5 - Quit")
+  print("4 - Quit")
 
 def print_datasets():
   print("Choose a dataset")
@@ -140,19 +139,17 @@ while True:
             elif start_position_flag == 2:
               starting_position = random_start(problem_description, video_size)
 
-            # fig, ax = plt.subplots()
-            # ax.set_xlim(-1, 1)
-            # ax.set_ylim(-1, 1)
-            # ax.set_xlabel("X")
-            # ax.set_ylabel("Y")
-            # ax.set_title("Tabu Search Solution Mapping")
+            fig, ax = plt.subplots()
+            ax.set_xlabel("iteration")
+            ax.set_ylabel("score")
+            ax.set_title("Simulated Annealing Solution Mapping")
             solution = simulated_annealing(starting_position, video_size, endpoint_data_description, 
-                                endpoint_cache_description, request_description, problem_description[4], dataset,
+                                endpoint_cache_description, request_description, problem_description[4], dataset, ax, fig, 
                                 max_iterations, initial_temperature, cooling_rate, neighbors_generated)
           
-            # fig.canvas.draw()
-            # plt.show(block=True)
-            # plt.close("all")
+            fig.canvas.draw()
+            plt.show(block=True)
+            plt.close("all")
           # genetic, with parameter control
           case 2:
             generations=1000
@@ -233,7 +230,6 @@ while True:
               starting_position = random_start(problem_description, video_size)
 
 
-            solution_positions = {}
             fig, ax = plt.subplots()
             ax.set_xlim(-1, 1)
             ax.set_ylim(-1, 1)
@@ -244,14 +240,9 @@ while True:
             fig.canvas.draw()
             plt.show(block=True)
             plt.close("all")
-
-    # display data
-    case 4:
-      print("Showing last solution")
-      #update_plot(solution, )
     
     # quit 
-    case 5:
+    case 4:
       break
 
 print("Exited sucessfully :D")

@@ -51,9 +51,6 @@ def get_neighbors_all(state: dict, video_size: list, cache_capacity: int, max_ne
         cache: sum(video_size[int(v)] for v in state[cache])
         for cache in state
     }
-    
-    cached_videos = set(video for videos in state.values() for video in videos)
-    uncached_videos = all_videos - cached_videos  # Videos not currently in any cache
 
     # Limit the number of operations to explore
     total_combinations = 0
@@ -81,20 +78,27 @@ def get_neighbors_all(state: dict, video_size: list, cache_capacity: int, max_ne
                 neighbors.append(new_state)
                 total_combinations += 1
         
-        elif operation_type == 'add' and uncached_videos:
-            # Add a random uncached video to the cache
-            video = random.choice(list(uncached_videos))
-            new_load = current_loads[cache] + video_size[video]
+        elif operation_type == 'add':
+            # Try to add a random video to a cache without it
+            video = random.choice(list(all_videos))
+            attempts = 0
+            while video in state[cache] and attempts < 10:
+                cache = random.choice(cache_ids)
+                attempts += 1
             
-            if new_load <= cache_capacity:
-                new_state = state.copy()  # Shallow copy of the dictionary
-                new_state[cache] = state[cache].copy()
-                new_state[cache].append(video)  # Add uncached video to the cache
+            # only do the operation
+            if attempts < 10:
+                new_load = current_loads[cache] + video_size[video]
                 
-                # Update the cache load
-                current_loads[cache] = new_load
-                neighbors.append(new_state)
-                total_combinations += 1
+                if new_load <= cache_capacity:
+                    new_state = state.copy()  # Shallow copy of the dictionary
+                    new_state[cache] = state[cache].copy()
+                    new_state[cache].append(video)  # Add uncached video to the cache
+                    
+                    # Update the cache load
+                    current_loads[cache] = new_load
+                    neighbors.append(new_state)
+                    total_combinations += 1
         
         # Stop if we've reached the maximum number of neighbors to generate
         if total_combinations >= max_neighbors:

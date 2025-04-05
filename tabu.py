@@ -3,8 +3,7 @@ import re
 import os
 import csv
 import json
-from parse import parse_results
-from get_solutions import get_init_solution
+
 from score_functions import score
 from get_neighbours import get_neighbors
 from get_neighbours import get_neighbors_all
@@ -19,7 +18,7 @@ def tabu_search(initial_solution: dict, video_size: list, endpoint_data_descript
     os.makedirs(folder_path_scores,exist_ok=True)
     
     solution_positions = {}
-    max_json_number = -1
+    max_json_number = 0
     result_file = None
 
 
@@ -31,7 +30,7 @@ def tabu_search(initial_solution: dict, video_size: list, endpoint_data_descript
                 max_json_number = file_id
                 result_file = file2
 
-    print(f"Largest file: {result_file}")
+    print(f"Best file: {result_file}")
 
     tabu = {}  
     best = initial_solution
@@ -132,8 +131,3 @@ def tabu_search(initial_solution: dict, video_size: list, endpoint_data_descript
     else:
         print(initial_score)
         return initial_solution
-
-
-
-
-

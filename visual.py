@@ -39,3 +39,10 @@ def update_plot_batch(edges, solution_positions, ax, fig, plotted_solutions):
 
     fig.canvas.draw_idle()
     plt.pause(0.01)
+
+def update_score(new_point, ax, fig):
+    (iteration, score) = new_point
+    ax.scatter(iteration, score, color='red')
+    
+    fig.canvas.draw_idle()
+    plt.pause(0.01)
