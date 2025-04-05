@@ -68,6 +68,15 @@ Key parameters, including the maximum number of iterations, iterations without i
 
 #### Genetic Algorithm
 
+The genetic algorithm starts out by generating a population whose size is determined by the user. The population's composition consists of three different types of potential solutions:
+
+- **Greedy Approach**: one third of the solutions in the population are the greedy ones calculated using the greedy heuristic in `greedy.py`;
+
+- **Mutated Greedy**: another third of the solutions are mutated versions of greedy. The *mutate_solution* method present in `population.py` uses a random pick from the solution list provided by the *get_neighbors* method from `get_neighbours.py`and is also used to mutate offspring after crossover;
+
+- **Random Pick**: the last third of the population can either be completely random solutions to fill out the remainder of the space or, in case the genetic algorithm was run previously, solutions will be randomly picked from `genetic\genetic.csv` (leads to a better starting point than greedy usually)
+
+The algorithm will run for a set number of generations which is also picked by the user. Furthermore, the user can pick if **elitism** is used or not - if chosen, it guarantees the best solution always moves on to the next generation. The rest of the next generation will consist of the crossover between two **parent solutions**. A parent solution is the one who has the most **fitness** (calculated using the *score* method from `score_functions.py`) in a **tournament** between X randomly chosen solutions. The tournament size is also customizable. When two parents are chosen, there is a **crossover** between them, which, in this case, consists of randomly picking two caches and switching the videos which are stored in them. After this crossover, the offspring may be mutated based on the chosen **mutation_rate** using the aforementioned method. This process repeats until the following population reaches the desired population size. 
 
 #### Tabu Search
 

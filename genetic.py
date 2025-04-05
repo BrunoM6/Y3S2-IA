@@ -24,8 +24,10 @@ def crossover(parent1, parent2):
 
     return offspring
 
-def genetic_algorithm(population, generations, fitness_func, mutation_rate=0.2, tournament_size=3, elitism=True):
+def genetic_algorithm(population, generations, fitness_func, folder_path, video_size, problem_description, mutation_rate=0.2, tournament_size=3, elitism=True):
     max_json_number = 0
+    folder_path_scores = os.join(folder_path, "/scores")
+    population_size = len(population)
     best_solution = max(population, key=fitness_func) 
     best_score = fitness_func(best_solution)
     os.makedirs(folder_path, exist_ok=True)
@@ -96,6 +98,6 @@ def genetic_algorithm(population, generations, fitness_func, mutation_rate=0.2, 
                 csv_writer.writerow(["algorithm", "solution_id", "score"])
                 csv_writer.writerows(updated_rows)  # Write updated data
             
-            print(f"Generation {generation + 1}: Best score = {best_score}")
+        print(f"Generation {generation + 1}: Best score = {best_score}")
 
     return best_solution

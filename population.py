@@ -5,45 +5,23 @@ import json
 import os
 from get_solutions import convert_keys_to_int
 from parse import parse_results
+from greedy import greedy_start
+from get_neighbours import get_neighbors
+from random_start import random_start
+
 
 def mutate_solution(solution, video_size, problem_description, mutation_rate=0.2):
-    """Apply small mutations to greedy."""
-    new_solution = copy.deepcopy(solution)
+    """Mutate a solution by swapping videos between caches using neighbor generation."""
+    if random.random() > mutation_rate:
+        return solution  # No mutation
 
-    for cache_id in new_solution:
-        if random.random() < mutation_rate and new_solution[cache_id]:  
-            # Remove random video
-            removed_video = random.choice(new_solution[cache_id])
-            new_solution[cache_id].remove(removed_video)
+    cache_capacity = problem_description[4] 
+    neighbors = get_neighbors(solution, video_size, cache_capacity)
 
-            # Check current cache load
-            current_load = sum(video_size[v] for v in new_solution[cache_id])
+    if not neighbors:
+        return solution  # No valid neighbors, return as-is
 
-            # Try adding new video (if it fits, else ignore)
-            new_video = random.randint(0, len(video_size) - 1)
-            if new_video not in new_solution[cache_id] and (current_load + video_size[new_video] <= problem_description[4]):
-                new_solution[cache_id].append(new_video)
-
-    return new_solution
-
-def random_solution(video_size, problem_description):
-    """Generate a random solution."""
-    solution = {}
-
-    for cache_id in range(problem_description[3]):  
-        solution[cache_id] = []
-        current_load = 0 
-
-        # Shuffle video IDs and add them until cap is reached
-        available_videos = list(range(len(video_size)))
-        random.shuffle(available_videos)
-
-        for video in available_videos:
-            if current_load + video_size[video] <= problem_description[4]:
-                solution[cache_id].append(video)
-                current_load += video_size[video]
-
-    return solution
+    return random.choice(neighbors)
 
 def import_existent(file, video_size, problem_description):
     csv_path = "genetic/genetic.csv"
@@ -58,7 +36,7 @@ def import_existent(file, video_size, problem_description):
                 solutions.append(row[1])
     
     if not solutions:
-        return random_solution(video_size, problem_description)
+        return random_start(problem_description, video_size)
     
     # Select a random solution
     selected_solution = random.choice(solutions)
@@ -89,7 +67,7 @@ def generate_population(greedy_solution, population_size=15, file='me_at_the_zoo
         mutated = mutate_solution(greedy_solution, video_size, problem_description)
         population.append(mutated)
 
-    # Pre computed solutions (if not enough, fill with)
+    # Pre computed solutions (if not enough, fill with random ones)
     for _ in range(portion_sizes[2]):
         random_sol = import_existent(file,video_size, problem_description)
         population.append(random_sol)
