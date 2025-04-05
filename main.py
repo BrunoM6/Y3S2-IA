@@ -52,12 +52,13 @@ def print_annealing_parameters(max_iterations: int, iterations_without_improveme
   print(f"6 - Generated Neighbors in each iteration (current: {neighbors_generated})")
   print("7 - Resume")
 
-def print_genetic_parameters(generations: int, mutation_rate: float, tournament_size: int):
+def print_genetic_parameters(generations: int, mutation_rate: float, tournament_size: int, population_size: int):
   print("Change any parameter")
   print(f"1 - Generations (current: {generations})")
   print(f"2 - Mutation Rate (current: {mutation_rate})")
   print(f"3 - Tournament Size (current: {tournament_size})")
-  print("4 - Resume")
+  print(f"4 - Population Size (current: {population_size})")
+  print("5 - Resume")
 
 def print_tabu(neighbors_generated_all:bool, max_iterations: int, tabu_tenure: int,max_neighbors:int,plot:bool,it_without_improvement:int):
   print("Change any parameter")
@@ -175,7 +176,7 @@ while True:
 
             parameter_command = 0
             while parameter_command != 5:
-              print_genetic_parameters(generations, mutation_rate, tournament_size)
+              print_genetic_parameters(generations, mutation_rate, tournament_size, population_size)
               parameter_command = int(input("Action:"))
               match parameter_command:
                 case 1:
