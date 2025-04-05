@@ -6,27 +6,21 @@ import os
 from get_solutions import convert_keys_to_int
 from parse import parse_results
 from greedy import greedy_start
+from get_neighbours import get_neighbors
 
 
 def mutate_solution(solution, video_size, problem_description, mutation_rate=0.2):
-    """Apply small mutations to greedy."""
-    new_solution = copy.deepcopy(solution)
+    """Mutate a solution by swapping videos between caches using neighbor generation."""
+    if random.random() > mutation_rate:
+        return solution  # No mutation
 
-    for cache_id in new_solution:
-        if random.random() < mutation_rate and new_solution[cache_id]:  
-            # Remove random video
-            removed_video = random.choice(new_solution[cache_id])
-            new_solution[cache_id].remove(removed_video)
+    cache_capacity = problem_description[4] 
+    neighbors = get_neighbors(solution, video_size, cache_capacity)
 
-            # Check current cache load
-            current_load = sum(video_size[v] for v in new_solution[cache_id])
+    if not neighbors:
+        return solution  # No valid neighbors, return as-is
 
-            # Try adding new video (if it fits, else ignore)
-            new_video = random.randint(0, len(video_size) - 1)
-            if new_video not in new_solution[cache_id] and (current_load + video_size[new_video] <= problem_description[4]):
-                new_solution[cache_id].append(new_video)
-
-    return new_solution
+    return random.choice(neighbors)
 
 def random_solution(video_size, problem_description):
     """Generate a random solution."""

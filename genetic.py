@@ -106,7 +106,7 @@ def genetic_algorithm(population, generations, fitness_func, mutation_rate=0.2, 
                 csv_writer.writerow(["algorithm", "solution_id", "score"])
                 csv_writer.writerows(updated_rows)  # Write updated data
             
-            print(f"Generation {generation + 1}: Best score = {best_score}")
+        print(f"Generation {generation + 1}: Best score = {best_score}")
 
     return best_solution
 
