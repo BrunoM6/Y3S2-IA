@@ -194,6 +194,9 @@ while True:
               population, 
               generations, 
               lambda solution: score(solution, endpoint_data_description, endpoint_cache_description, request_description),
+              "./genetic",
+              video_size,
+              problem_description,
               mutation_rate,
               tournament_size
               )
