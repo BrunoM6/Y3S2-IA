@@ -8,7 +8,7 @@ from score_functions import score
 from visual import update_plot_batch, update_score
 
 
-def hill_climb(initial_solution: dict, video_size: list, endpoint_data_description: list, endpoint_cache_description: dict, request_description: dict, cache_capacity: int, dataset: str, ax, fig,max_iterations=1000, neighbors_generated=5):
+def hill_climb(initial_solution: dict, video_size: list, endpoint_data_description: list, endpoint_cache_description: dict, request_description: dict, cache_capacity: int, dataset: str,max_iterations, neighbors_generated,show_plot, ax=None, fig=None):
     # initialize the directories for results
     dataset_path_scores = os.path.join("scores", dataset)
     os.makedirs(dataset_path_scores, exist_ok=True)
@@ -67,8 +67,6 @@ def hill_climb(initial_solution: dict, video_size: list, endpoint_data_descripti
                 current_solution = best_neighbor
                 current_score = best_neighbor_score
 
-            # plot new solution
-            update_score((max_json_number + iteration, current_score), ax, fig)
 
             # log the state
             solution_id = f"solution_{max_json_number + iteration}.json"
@@ -81,12 +79,15 @@ def hill_climb(initial_solution: dict, video_size: list, endpoint_data_descripti
             neighbor_edges = []  # Store tuples (current_solution, neighbor)
             plotted_solutions = set()
 
-            for idx, neighbor in enumerate(neighbors):
-                neighbor_edges.append((current_solution, neighbor))
-                
-                if idx % 300 == 0:  # Adjust this number as needed for performance
-                    update_plot_batch(neighbor_edges, solution_positions, ax, fig, plotted_solutions)
-                    neighbor_edges.clear()  # Clear edges after drawing
+            if show_plot:
+                # plot new solution
+                # update_score((max_json_number + iteration, current_score), ax, fig)
+                for idx, neighbor in enumerate(neighbors):
+                    neighbor_edges.append((current_solution, neighbor))
+                    
+                    if idx % 300 == 0:  # Adjust this number as needed for performance
+                        update_plot_batch(neighbor_edges, solution_positions, ax, fig, plotted_solutions)
+                        neighbor_edges.clear()  # Clear edges after drawing
     
     print(f"Best score found during this Hill Climbing instance is {current_score}")
     return current_solution
