@@ -1,14 +1,13 @@
-import random
-import re
-import os
 import csv
 import json
+import os
+import random
+import re
 
+from get_neighbours import get_neighbors, get_neighbors_all, state_to_key
 from score_functions import score
-from get_neighbours import get_neighbors
-from get_neighbours import get_neighbors_all
-from get_neighbours import state_to_key
 from visual import update_plot_batch
+
 
 def tabu_search(initial_solution: dict, video_size: list, endpoint_data_description: list, endpoint_cache_description: dict, request_description: dict, cache_capacity: int,dataset: str,get_all:bool,ax,fig,max_neighbors, max_iterations=1000, tabu_tenure=8):
     
@@ -39,6 +38,7 @@ def tabu_search(initial_solution: dict, video_size: list, endpoint_data_descript
     print(initial_score)
     print(initial_solution)
     solution_id = ""
+    neighbors = []
     
     iterations_without_improvement = 0  
     iteration = 0  
@@ -61,17 +61,18 @@ def tabu_search(initial_solution: dict, video_size: list, endpoint_data_descript
             
             if(get_all):
                 # **Step 1: Generate all neighbors**
-                for neighbor in get_neighbors_all(best, video_size,  cache_capacity,max_neighbors):
+                neighbors = get_neighbors_all(best, video_size,  cache_capacity,max_neighbors)
+                for neighbor in neighbors:
                     # prev_solution = update_plot(best, neighbor, solution_positions, ax, fig, prev_solution)
                     neighbor_score = score(neighbor, endpoint_data_description, endpoint_cache_description, request_description)
                     candidate_list.append((neighbor, neighbor_score))
             else:
                 # **Step 1: Generate all neighbors**
-                for neighbor in get_neighbors(best, video_size,  cache_capacity):
+                neighbors = get_neighbors(best, video_size,  cache_capacity)
+                for neighbor in neighbors:
                     # prev_solution = update_plot(best, neighbor, solution_positions, ax, fig, prev_solution)
                     neighbor_score = score(neighbor, endpoint_data_description, endpoint_cache_description, request_description)
                     candidate_list.append((neighbor, neighbor_score))
-            
             # **Step 2: Choose the best candidate**
             for candidate, candidate_score in candidate_list:
                 candidate_key = state_to_key(candidate)
@@ -119,7 +120,7 @@ def tabu_search(initial_solution: dict, video_size: list, endpoint_data_descript
             neighbor_edges = []  # Store tuples (current_solution, neighbor)
             plotted_solutions = set()
 
-            for idx, neighbor in enumerate(get_neighbors_all(best, video_size, cache_capacity)):
+            for idx, neighbor in enumerate(neighbors):
                 neighbor_edges.append((best, neighbor))
                 
                 if idx % 300 == 0:  # Adjust this number as needed for performance

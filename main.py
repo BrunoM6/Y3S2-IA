@@ -1,8 +1,11 @@
 import os
+
 import matplotlib.pyplot as plt
+
 from annealing import simulated_annealing
 from genetic import genetic_algorithm
 from get_solutions import get_init_solution
+from hill_climb import hill_climb
 from parse import parse_results
 from population import generate_population
 from random_start import random_start
@@ -36,7 +39,8 @@ def print_algorithms(dataset: str):
   print("1 - Simulated Annealing")
   print("2 - Genetic Algorithm")
   print("3 - Tabu Search")
-  print("4 - Quit")
+  print("4 - Hill Climb")
+  print("5 - Quit")
 
 def print_annealing_parameters(max_iterations: int, iterations_without_improvement_cap: int, initial_temperature: int, cooling_rate: float, minimum_temperature: float, neighbors_generated: int):
   print("Change any parameter")
@@ -62,6 +66,12 @@ def print_tabu(neighbors_generated_all:bool, max_iterations: int, tabu_tenure: i
   print(f"3 - Tabu Tenure (current: {tabu_tenure})")
   print(f"4 - Max_neighbors (current: {max_neighbors})")
   print("5 - Resume")
+
+def print_hillclimb( max_iterations: int, max_neighbors: int):
+  print("Change any parameter")
+  print(f"1 - Max Iterations (current: {max_iterations})")
+  print(f"2 - Max_neighbors (current: {max_neighbors})")
+  print("3 - Resume")
 
 datasets = {1: 'kittens.in.txt', 2: 'me_at_the_zoo.in', 3: 'trending_today.in', 4: 'videos_worth_spreading.in'}
 dataset = 'me_at_the_zoo.in'
@@ -256,7 +266,62 @@ while True:
             plt.show(block=True)
             plt.close("all")
     
-    # quit 
+          case 4:
+
+            starting_position = {}
+            parameter_command = 0
+            generate_neighbors_all = False
+            max_iterations = 1000
+            max_neighbors = 500
+
+            while parameter_command != 3:
+                print_hillclimb( max_iterations, max_neighbors)
+                parameter_command = int(input("Action:"))
+                
+                match parameter_command:
+                    case 1:
+                        max_iterations = int(input("New value:"))
+                    case 2:
+                        max_neighbors = int(input("New value:"))
+
+            if start_position_flag == 1:
+                starting_position = get_init_solution(
+                    problem_description,
+                    video_size,
+                    dataset,
+                    'hill_climb',
+                    endpoint_data_description,
+                    endpoint_cache_description,
+                    request_description
+                )
+            elif start_position_flag == 2:
+                starting_position = random_start(problem_description, video_size)
+
+            fig, ax = plt.subplots()
+            ax.set_xlim(-1, 1)
+            ax.set_ylim(-1, 1)
+            ax.set_xlabel("X")
+            ax.set_ylabel("Y")
+            ax.set_title("Hill Climbing Solution Mapping")
+
+            solution = hill_climb(
+                starting_position,
+                video_size,
+                endpoint_data_description,
+                endpoint_cache_description,
+                request_description,
+                problem_description[4],
+                dataset,
+                ax,
+                fig,
+                max_iterations,
+                max_neighbors
+            )
+
+            fig.canvas.draw()
+            plt.show(block=True)
+            plt.close("all")
+            # quit 
     case 4:
       break
 
