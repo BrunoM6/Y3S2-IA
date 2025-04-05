@@ -3,17 +3,7 @@ import copy
 import os
 import json
 import csv
-from greedy import greedy_start
-from population import generate_population, mutate_solution
-from score_functions import score
-from parse import parse_results
-
-# Set parameters (can adjust these to test what results different parameters can achieve)
-generations = 100  # Number of generations
-mutation_rate = 0.1  # Mutation rate
-tournament_size = 5  # Tournament selection size
-file = 'me_at_the_zoo.in' # Data file
-population_size = 66 # Population size
+from population import mutate_solution
 
 def tournament_selection(population, fitness_func, tournament_size=3):
     """Selects a parent using tournament selection."""
@@ -34,8 +24,10 @@ def crossover(parent1, parent2):
 
     return offspring
 
-def genetic_algorithm(population, generations, fitness_func, mutation_rate=0.2, tournament_size=3, elitism=True):
+def genetic_algorithm(population, generations, fitness_func, folder_path, video_size, problem_description, mutation_rate=0.2, tournament_size=3, elitism=True):
     max_json_number = 0
+    folder_path_scores = os.join(folder_path, "/scores")
+    population_size = len(population)
     best_solution = max(population, key=fitness_func) 
     best_score = fitness_func(best_solution)
     os.makedirs(folder_path, exist_ok=True)
@@ -109,23 +101,3 @@ def genetic_algorithm(population, generations, fitness_func, mutation_rate=0.2, 
         print(f"Generation {generation + 1}: Best score = {best_score}")
 
     return best_solution
-
-problem_description, video_size, endpoint_data_description, endpoint_cache_description, request_description = parse_results(file)
-
-# Generate initial population 
-greedy_solution = greedy_start() 
-population = generate_population(greedy_solution, population_size, file) 
-folder_path = "genetic"
-folder_path_scores = os.path.join("genetic/scores", file)
-folder_path_greedy_scores = os.path.join("genetic/greedy", file)
-# Run the genetic algorithm
-best_solution = genetic_algorithm(
-    population,
-    generations,
-    lambda solution: score(solution, endpoint_data_description, endpoint_cache_description, request_description),
-    mutation_rate,
-    tournament_size,
-
-)
-
-print("Best solution found:", best_solution)

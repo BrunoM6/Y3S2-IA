@@ -8,7 +8,7 @@ def convert_keys_to_int(d):
     """Convert dictionary keys from strings to integers."""
     return {int(k): v for k, v in d.items()} if isinstance(d, dict) else d
 
-def get_best_stored_solution(csv_path, folder_path):
+def get_best_stored_solution(csv_path, results_path):
     """Retrieve the best solution from stored JSON files based on the highest score in CSV."""
     best_solution = None
     best_score = float('-inf')
@@ -26,7 +26,7 @@ def get_best_stored_solution(csv_path, folder_path):
                 
                 if score > best_score:
                     best_score = score
-                    solution_path = os.path.join(folder_path, solution_id)
+                    solution_path = os.path.join(results_path, solution_id)
                     
                     if os.path.exists(solution_path):
                         with open(solution_path, "r") as sol_file:
@@ -35,32 +35,27 @@ def get_best_stored_solution(csv_path, folder_path):
     return (convert_keys_to_int(best_solution), best_score) if best_solution else (None, float('-inf'))
 
 
-def get_init_solution(folder_path_scores, file_name, algorithm_name, endpoint_data_description, endpoint_cache_description, request_description):
-    """
-    Determine the best initial solution:
-    - If a stored solution exists with a higher score, use it.
-    - Otherwise, use the greedy solution.
-    """
-    folder_path_greedy_scores = os.path.join(algorithm_name, "greedy_scores")
-    os.makedirs(folder_path_greedy_scores, exist_ok=True)
-    
-    score_file_path = os.path.join(folder_path_greedy_scores, f'score_{file_name}.txt')
-    greedy_score = 0
-    
-    if os.path.exists(score_file_path):
-        with open(score_file_path, "r") as file_score:
+def get_init_solution(problem_description, video_size, dataset, algorithm, endpoint_data_description, endpoint_cache_description, request_description):
+    """Retrieve the initial solution from the dataset, use greedy solution in case there is none."""
+    # deterministic heuristic, score can be stored previously (if not calculate and store it)
+    os.makedirs("greedy_scores", exist_ok=True)
+    folder_path_greedy_score = os.path.join("greedy_scores", f'score_{dataset}.txt')
+    if os.path.exists(folder_path_greedy_score):
+        with open(folder_path_greedy_score, "r") as file_score:
             greedy_score = float(file_score.read().strip())
     else:
-        greedy_score = score(greedy_start(), endpoint_data_description, endpoint_cache_description, request_description)
-        with open(score_file_path, "w") as file_score:
+        greedy_start_solution = greedy_start(problem_description, video_size, endpoint_data_description, endpoint_cache_description, request_description)
+        greedy_score = score(greedy_start_solution, endpoint_data_description, endpoint_cache_description, request_description)
+        with open(folder_path_greedy_score, "w") as file_score:
             file_score.write(str(greedy_score))
     
-    csv_path = os.path.join(algorithm_name, f'{algorithm_name}.csv')
-    best_stored_solution, best_stored_score = get_best_stored_solution(csv_path, folder_path_scores)
+    # get best of the previous scores, if there aren't any, use the greedy heuristic score
+    csv_path = os.path.join("scores", dataset, f'{algorithm}.csv')
+    results_path = os.path.join("results", dataset,algorithm)
+    best_stored_solution, best_stored_score = get_best_stored_solution(csv_path, results_path)
+
 
     if best_stored_solution is not None and isinstance(best_stored_score, (int, float)) and best_stored_score >= greedy_score:
-        print("Best Stored Solution", best_stored_score)
-        print("Best Stored Score solution", best_stored_score)
-        return best_stored_solution  # Use the best stored solution
+        return best_stored_solution  # use the best stored solution associated with the best score
 
-    return greedy_start()  # Use the greedy solution if it's better
+    return greedy_start(problem_description, video_size, endpoint_data_description, endpoint_cache_description, request_description) 

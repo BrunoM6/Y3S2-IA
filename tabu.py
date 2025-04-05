@@ -9,15 +9,16 @@ from score_functions import score
 from get_neighbours import get_neighbors
 from get_neighbours import get_neighbors_all
 from get_neighbours import state_to_key
+from visual import update_plot_batch
 
-def tabu_search(initial_solution: dict, video_size: list, endpoint_data_description: list, 
-                 endpoint_cache_description: dict, request_description: dict, cache_capacity: int, 
-                 max_iterations=1000, tabu_tenure=8):
+def tabu_search(initial_solution: dict, video_size: list, endpoint_data_description: list, endpoint_cache_description: dict, request_description: dict, cache_capacity: int,dataset: str,get_all:bool,ax,fig, max_iterations=1000, tabu_tenure=8):
     
-    global file
+    folder_path_scores = "results/"+dataset+"/tabu"
+    folder_path = "scores/" + dataset  
     os.makedirs(folder_path, exist_ok=True)
     os.makedirs(folder_path_scores,exist_ok=True)
     
+    solution_positions = {}
     max_json_number = -1
     result_file = None
 
@@ -35,21 +36,21 @@ def tabu_search(initial_solution: dict, video_size: list, endpoint_data_descript
     tabu = {}  
     best = initial_solution
     best_score = score(initial_solution, endpoint_data_description, endpoint_cache_description, request_description)
+    initial_score = best_score
+    print(initial_score)
+    print(initial_solution)
     solution_id = ""
-    print(best_score)
     
     iterations_without_improvement = 0  
     iteration = 0  
-
-
-    
     with open(os.path.join(folder_path, "tabu.csv"), "a", newline="") as csvfile:
         csv_writer = csv.writer(csvfile)
         if(not os.path.exists(folder_path_scores)):
             csv_writer.writerow(["algorithm", "solution_id", "score"])
-        
-        while iteration < max_iterations and iterations_without_improvement < 500:  
+        prev_solution = {} 
+        while iteration < max_iterations and iterations_without_improvement < 50:  
             iteration += 1
+            # print(iterations_without_improvement)
 
             tabu = {k: v - 1 for k, v in tabu.items() if v > 1}
 
@@ -59,10 +60,18 @@ def tabu_search(initial_solution: dict, video_size: list, endpoint_data_descript
             aspiration_candidate = None
             aspiration_score = float('-inf')
             
-            # **Step 1: Generate all neighbors**
-            for neighbor in get_neighbors_all(best, video_size,  cache_capacity):
-                neighbor_score = score(neighbor, endpoint_data_description, endpoint_cache_description, request_description)
-                candidate_list.append((neighbor, neighbor_score))
+            if(get_all):
+                # **Step 1: Generate all neighbors**
+                for neighbor in get_neighbors_all(best, video_size,  cache_capacity):
+                    # prev_solution = update_plot(best, neighbor, solution_positions, ax, fig, prev_solution)
+                    neighbor_score = score(neighbor, endpoint_data_description, endpoint_cache_description, request_description)
+                    candidate_list.append((neighbor, neighbor_score))
+            else:
+                # **Step 1: Generate all neighbors**
+                for neighbor in get_neighbors(best, video_size,  cache_capacity):
+                    # prev_solution = update_plot(best, neighbor, solution_positions, ax, fig, prev_solution)
+                    neighbor_score = score(neighbor, endpoint_data_description, endpoint_cache_description, request_description)
+                    candidate_list.append((neighbor, neighbor_score))
             
             # **Step 2: Choose the best candidate**
             for candidate, candidate_score in candidate_list:
@@ -80,10 +89,17 @@ def tabu_search(initial_solution: dict, video_size: list, endpoint_data_descript
 
             # **Step 3: Decide whether to use the best move or an aspiration move**
             if best_candidate:
-                best = best_candidate
-                best_score = best_candidate_score
-                tabu[state_to_key(best)] = tabu_tenure  # Mark as tabu
-                iterations_without_improvement = 0  # Reset stagnation counter
+                if(best_candidate_score>best_score):
+                    best = best_candidate
+                    best_score = best_candidate_score
+                    tabu[state_to_key(best)] = tabu_tenure  # Mark as tabu
+                    iterations_without_improvement = 0  # Reset stagnation counter
+                else:
+                    best = best_candidate
+                    best_score = best_candidate_score
+                    tabu[state_to_key(best)] = tabu_tenure  # Mark as tabu
+                    iterations_without_improvement += 1  # Reset stagnation counter
+
             elif aspiration_candidate:
                 best = aspiration_candidate
                 best_score = aspiration_score
@@ -100,23 +116,24 @@ def tabu_search(initial_solution: dict, video_size: list, endpoint_data_descript
                 json.dump(best, sol_file)
             csv_writer.writerow(["TabuSearch", solution_id, best_score])
             csvfile.flush()  
-    print(best_score)
     
-    return best
+            neighbor_edges = []  # Store tuples (current_solution, neighbor)
+            plotted_solutions = set()
+
+            for idx, neighbor in enumerate(get_neighbors_all(best, video_size, cache_capacity)):
+                neighbor_edges.append((best, neighbor))
+                
+                if idx % 300 == 0:  # Adjust this number as needed for performance
+                    update_plot_batch(neighbor_edges, solution_positions, ax, fig, plotted_solutions)
+                    neighbor_edges.clear()  # Clear edges after drawing
+    if best_score > int(initial_score):
+        print(best_score)
+        return best 
+    else:
+        print(initial_score)
+        return initial_solution
 
 
-file = 'me_at_the_zoo.in'
-folder_path = "tabu"
-folder_path_scores = os.path.join("tabu/scores", file)
-folder_path_greedy_scores = os.path.join("tabu/greedy", file)
-problem_description, video_size, endpoint_data_description, endpoint_cache_description, request_description = parse_results(file)
-initial_solution = get_init_solution(
-    folder_path_scores=folder_path_scores,
-    file_name=file,
-    algorithm_name='tabu',
-    endpoint_data_description=endpoint_data_description,
-    endpoint_cache_description=endpoint_cache_description,
-    request_description=request_description
-)
 
-print(tabu_search(initial_solution, video_size, endpoint_data_description, endpoint_cache_description, request_description, problem_description[4]))
+
+

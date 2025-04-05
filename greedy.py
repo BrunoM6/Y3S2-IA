@@ -1,53 +1,39 @@
-from parse import parse_results
+def greedy_start(problem_description:list, video_size: list, endpoint_data_description: list, endpoint_cache_description: dict, request_description: dict):
+    # initialize important values 
+    num_caches = problem_description[3]
+    cache_capacity = problem_description[4]
 
-def greedy_start():
     # empty solution dictionary
-    solution = {cache: [] for cache in range(problem_description[3])}
-    cache_cap = problem_description[4]
+    solution = {cache: [] for cache in range(num_caches)}
+    current_loads = {cache: 0 for cache in range(num_caches)}
+
+    # precomputed map endpoint to list of cache and latencies for speed
+    endpoint_to_caches = {}
+    for (endpoint, cache), latency in endpoint_cache_description.items():
+        endpoint_to_caches.setdefault(endpoint, []).append((cache, latency))
+
+    # precomputed score for each video candidate (total saved time if that video is stored in the cache)
     scores = {}
+    for (endpoint, video), request_number in request_description.items():
+        data_center_latency = endpoint_data_description[endpoint]
 
-    # calculate scores
-    for (endpoint, video) in request_description.keys():
-        for element in endpoint_cache_description.keys():
-            if int(element[0]) == int(endpoint):
-                cache = element[1]
-                saved_time = get_saved_time(element, video)
-                #if exists
-                if (cache, video) in scores:
-                    scores[(cache,video)] += saved_time
-                #if not
-                else:
-                    scores[(cache, video)] = saved_time
-                    
-    scores = [(cache,video,saved_time) for (cache, video), saved_time in scores.items()]
-
-
-    # sort (video, cache, cost) by cost (desc)
-    scores.sort(key=lambda a: a[2], reverse=True)
-
-    # iterate through scores and fill caches
-    for (cache, video, sc) in scores:
-        curr_cap = current_cap(cache, solution)
-        if (curr_cap < cache_cap) and (video_size[int(video)] + curr_cap <= cache_cap) and (video not in solution[int(cache)]):
-            solution[int(cache)].append(video)
-
-
-    # return greedy solution
+        for cache, cache_latency in endpoint_to_caches.get(endpoint, []):
+            if cache_latency < data_center_latency:
+                saved_time = (data_center_latency - cache_latency) * request_number
+                scores[(cache, video)] = scores.get((cache, video), 0) + saved_time
+    
+    # create candidate list and sort by saved time
+    candidates = [(cache, video, saved_time) for (cache, video), saved_time in scores.items()]
+    candidates.sort(key=lambda x: x[2], reverse=True)
+    
+    # assign videos to caches 
+    for cache, video, saved_time in candidates:
+        # if video is in cache, skip
+        if video in solution[cache]:
+            continue
+        # if fits, add
+        if current_loads[cache] + video_size[video] <= cache_capacity:
+            solution[cache].append(video)
+            current_loads[cache] += video_size[video]
+    
     return solution
-
-def get_saved_time(element, video):
-    (endpoint, cache) = element
-
-    data_center_latency = endpoint_data_description[int(endpoint)]
-    cache_latency = endpoint_cache_description[element]
-    
-    request_number = request_description.get((f"{endpoint}", f"{video}"), 0)
-    
-    return (int(data_center_latency) - int(cache_latency)) * int(request_number)
-
-
-def current_cap(cache, solution):
-    return sum(video_size[int(v)] for v in solution[int(cache)])
-
-problem_description, video_size, endpoint_data_description, endpoint_cache_description, request_description = parse_results('me_at_the_zoo.in')
-
