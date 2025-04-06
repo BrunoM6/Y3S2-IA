@@ -18,18 +18,7 @@ def crossover(parent1, parent2):
     offspring[cache1], offspring[cache2] = parent2[cache1], parent2[cache2]
     return offspring
 
-def genetic_algorithm(
-    population,
-    generations,
-    fitness_func,
-    video_size,
-    problem_description,
-    dataset,
-    mutation_rate=0.2,
-    tournament_size=3,
-    visualize=False,
-    elitism=True
-):
+def genetic_algorithm(population,generations,fitness_func,video_size,problem_description,dataset,mutation_rate=0.2,tournament_size=3,show_plot=False,elitism=True):
     max_json_number = 0
     folder_path_scores = f"results/{dataset}/genetic"
     population_size = len(population)
@@ -41,7 +30,7 @@ def genetic_algorithm(
     csv_path = os.path.join(f"scores/{dataset}", "genetic.csv")
 
     # Setup score visualization
-    if visualize:
+    if show_plot:
         plt.ion()
         fig_score, ax_score = plt.subplots()
         ax_score.set_title("Genetic Algorithm Progress")
@@ -103,10 +92,10 @@ def genetic_algorithm(
 
         print(f"Generation {generation + 1}: Best score = {best_score}")
 
-        if visualize:
+        if show_plot:
             update_score((generation + 1, current_best_score), ax_score, fig_score)
 
-    if visualize:
+    if show_plot:
         plt.ioff()
         plt.show()
 
