@@ -172,7 +172,7 @@ while True:
             generations=1000
             mutation_rate=0.1
             tournament_size=5
-            population_size=66
+            population_size=99
 
             parameter_command = 0
             while parameter_command != 5:
@@ -211,8 +211,9 @@ while True:
               "./genetic",
               video_size,
               problem_description,
+              dataset,
               mutation_rate,
-              tournament_size
+              tournament_size,
               )
 
           # tabu

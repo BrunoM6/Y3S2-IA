@@ -10,22 +10,33 @@ from get_neighbours import get_neighbors
 from random_start import random_start
 
 
+
 def mutate_solution(solution, video_size, problem_description, mutation_rate=0.2):
-    """Mutate a solution by swapping videos between caches using neighbor generation."""
-    if random.random() > mutation_rate:
-        return solution  # No mutation
-
-    cache_capacity = problem_description[4] 
-    neighbors = get_neighbors(solution, video_size, cache_capacity)
-
-    if not neighbors:
-        return solution  # No valid neighbors, return as-is
-
-    return random.choice(neighbors)
+    """Apply small mutations to greedy."""
+    new_solution = copy.deepcopy(solution)
+ 
+    for cache_id in new_solution:
+        if random.random() < mutation_rate and new_solution[cache_id]:  
+            # Remove random video
+            removed_video = random.choice(new_solution[cache_id])
+            new_solution[cache_id].remove(removed_video)
+ 
+            # Check current cache load
+            current_load = sum(video_size[v] for v in new_solution[cache_id])
+ 
+            # Try adding new video (if it fits, else ignore)
+            new_video = random.randint(0, len(video_size) - 1)
+            if new_video not in new_solution[cache_id] and (current_load + video_size[new_video] <= problem_description[4]):
+                 new_solution[cache_id].append(new_video)
+ 
+    return new_solution
 
 def import_existent(file, video_size, problem_description):
     csv_path = "genetic/genetic.csv"
     solutions = []
+
+    if not os.path.exists(csv_path):
+        return random_start(problem_description, video_size)
     
     # Read the CSV file to get available solutions
     with open(csv_path, newline='') as csvfile:
