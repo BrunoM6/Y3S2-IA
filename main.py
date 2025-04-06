@@ -58,7 +58,8 @@ def print_genetic_parameters(generations: int, mutation_rate: float, tournament_
   print(f"2 - Mutation Rate (current: {mutation_rate})")
   print(f"3 - Tournament Size (current: {tournament_size})")
   print(f"4 - Population Size (current: {population_size})")
-  print("5 - Resume")
+  print(f"5 - Show plots (current: {show_plot})")
+  print("6 - Resume")
 
 def print_tabu(neighbors_generated_all:bool, max_iterations: int, tabu_tenure: int,max_neighbors:int,plot:bool,it_without_improvement:int):
   print("Change any parameter")
@@ -173,9 +174,10 @@ while True:
             mutation_rate=0.1
             tournament_size=5
             population_size=99
+            show_plot=False
 
             parameter_command = 0
-            while parameter_command != 5:
+            while parameter_command != 6:
               print_genetic_parameters(generations, mutation_rate, tournament_size, population_size)
               parameter_command = int(input("Action:"))
               match parameter_command:
@@ -187,6 +189,14 @@ while True:
                   tournament_size = int(input("What is the new value you want to set?"))
                 case 4:
                   population_size = int(input("What is the new value you want to set?"))
+                case 5:
+                  user_input = input("Write true or false: ").strip().lower()
+                  if user_input == "true":
+                    show_plot = True
+                  elif user_input == "false":
+                    show_plot = False
+                  else:
+                    print("Invalid input, please enter 'true' or 'false'.")
             
             # get the correct starting position depending on flag
             starting_position = {}
@@ -208,12 +218,12 @@ while True:
               population, 
               generations, 
               lambda solution: score(solution, endpoint_data_description, endpoint_cache_description, request_description),
-              "./genetic",
               video_size,
               problem_description,
               dataset,
               mutation_rate,
               tournament_size,
+              show_plot
               )
 
           # tabu
