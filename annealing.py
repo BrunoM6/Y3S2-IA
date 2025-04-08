@@ -1,17 +1,17 @@
 import csv
 import json
+import math
 import os
 import random
 import re
-import math
+import time  # <- Added
 
 from get_neighbours import get_optimized_neighbors
 from score_functions import score
 from visual import update_score
 
-def simulated_annealing(initial_solution: dict, video_size: list, endpoint_data_description: list, 
-                         endpoint_cache_description: dict, request_description: dict, cache_capacity: int, dataset: str, ax, fig, 
-                         max_iterations=10000, iterations_without_improvement_cap=500, initial_temperature=1000.0, cooling_rate=0.99, minimum_temperature=1e-4, neighbors_generated=5):
+
+def simulated_annealing(initial_solution: dict, video_size: list, endpoint_data_description: list, endpoint_cache_description: dict, request_description: dict, cache_capacity: int, dataset: str,show_plot:bool , max_iterations=10000, iterations_without_improvement_cap=500, initial_temperature=1000.0, cooling_rate=0.99, minimum_temperature=1e-4, neighbors_generated=5, ax=None, fig=None):
     # initialize the directories for results
     dataset_path_scores = os.path.join("scores", dataset)
     os.makedirs(dataset_path_scores, exist_ok=True)
@@ -39,10 +39,16 @@ def simulated_annealing(initial_solution: dict, video_size: list, endpoint_data_
     temperature = initial_temperature
     iterations_without_improvement = 0
 
+
     with open(os.path.join(dataset_path_scores, "annealing.csv"), "a", newline="") as csvfile:
         csv_writer = csv.writer(csvfile)
-        
-        # log the starting solution as solution 0 for annealing
+
+        # Write header if the file is empty
+        if not os.path.exists(os.path.join(dataset_path_scores, "annealing.csv")) or os.path.getsize(os.path.join(dataset_path_scores, "annealing.csv")) == 0:
+            csv_writer.writerow(["algorithm", "solution_id", "score"])
+            # csv_writer.writerow(["algorithm", "solution_id", "score", "time_seconds"])
+
+        # log the starting solution
         solution_id = "solution_0.json"
         solution_path = os.path.join(dataset_path_results, solution_id)
         with open(solution_path, "w") as sol_file:
@@ -50,9 +56,7 @@ def simulated_annealing(initial_solution: dict, video_size: list, endpoint_data_
         csv_writer.writerow(["SimulatedAnnealing", solution_id, current_score])
         csvfile.flush()
         
-        if not os.path.exists(os.path.join(dataset_path_scores, "annealing.csv")) or os.path.getsize(os.path.join(dataset_path_scores, "annealing.csv")) == 0:  # check if the folder is empty
-                csv_writer.writerow(["algorithm", "solution_id", "score"])
-        
+        start_time = time.time()  # Start timing
         for iteration in range(1, max_iterations + 1):
             temperature *= cooling_rate  # Reduce temperature each iteration
             
@@ -83,14 +87,17 @@ def simulated_annealing(initial_solution: dict, video_size: list, endpoint_data_
                     best_solution = current_solution
                     best_score = current_score
 
-                # plot new solution
-                update_score((max_json_number + iteration, current_score), ax, fig)
+                if show_plot:
+                    # plot new solution
+                    update_score((max_json_number + iteration, current_score), ax, fig)
 
                 # log the state
+                # elapsed_time = time.time() - start_time
                 solution_id = f"solution_{max_json_number + iteration}.json"
                 solution_path = os.path.join(dataset_path_results, solution_id)
                 with open(solution_path, "w") as sol_file:
                     json.dump(current_solution, sol_file)
+                # csv_writer.writerow(["SimulatedAnnealing", solution_id, current_score, round(elapsed_time, 3)])
                 csv_writer.writerow(["SimulatedAnnealing", solution_id, current_score])
                 csvfile.flush()
             else:

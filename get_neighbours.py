@@ -29,7 +29,7 @@ def get_neighbors(state: dict, video_size: list, cache_capacity: int):
                         continue  # Skip swaps that violate capacity
                     
                     # Instead of a full deep copy, copy only the affected caches.
-                    new_state = state.copy()  # shallow copy of the dictionary
+                    new_state = state.copy()
                     new_state[cache_a] = state[cache_a].copy()
                     new_state[cache_b] = state[cache_b].copy()
                     
@@ -38,72 +38,68 @@ def get_neighbors(state: dict, video_size: list, cache_capacity: int):
                     new_state[cache_a].append(video_b)
                     new_state[cache_b].append(video_a)
                     
-                    neighbors.append(new_state)
+                    # Describe the change
+                    change = ("swap", video_a, cache_a, video_b, cache_b)
+                    neighbors.append((new_state, change))
                         
     return neighbors
+
+import random
 
 def get_neighbors_all(state: dict, video_size: list, cache_capacity: int, max_neighbors: int = 500):
     neighbors = []
     cache_ids = list(state.keys())
-    all_videos = set(range(len(video_size)))  # All video IDs (assuming videos are indexed from 0)
+    all_videos = set(range(len(video_size)))  # All video IDs
     
     current_loads = {
         cache: sum(video_size[int(v)] for v in state[cache])
         for cache in state
     }
 
-    # Limit the number of operations to explore
     total_combinations = 0
     
-    # Iterate over each cache and try adding uncached videos or removing videos from the current cache
     while total_combinations < max_neighbors:
-        # Randomly select a cache to operate on
         cache = random.choice(cache_ids)
-        
-        # Randomly choose whether to remove or add a video
         operation_type = random.choice(['remove', 'add'])
-        
+
         if operation_type == 'remove' and state[cache]:
-            # Remove a random video from the cache
             video = random.choice(state[cache])
             new_load = current_loads[cache] - video_size[int(video)]
             
-            if new_load >= 0:  # Ensure that removing the video does not cause negative load
-                new_state = state.copy()  # Shallow copy of the dictionary
+            if new_load >= 0:
+                new_state = state.copy()
                 new_state[cache] = state[cache].copy()
-                new_state[cache].remove(video)  # Remove video from cache
+                new_state[cache].remove(video)
                 
-                # Update the cache load
                 current_loads[cache] = new_load
-                neighbors.append(new_state)
+                
+                change = ("remove", video, cache)
+                neighbors.append((new_state, change))
                 total_combinations += 1
-        
+
         elif operation_type == 'add':
-            # Try to add a random video to a cache without it
             video = random.choice(list(all_videos))
             attempts = 0
             while video in state[cache] and attempts < 10:
                 cache = random.choice(cache_ids)
                 attempts += 1
             
-            # only do the operation
             if attempts < 10:
                 new_load = current_loads[cache] + video_size[video]
-                
                 if new_load <= cache_capacity:
-                    new_state = state.copy()  # Shallow copy of the dictionary
+                    new_state = state.copy()
                     new_state[cache] = state[cache].copy()
-                    new_state[cache].append(video)  # Add uncached video to the cache
+                    new_state[cache].append(video)
                     
-                    # Update the cache load
                     current_loads[cache] = new_load
-                    neighbors.append(new_state)
+                    
+                    change = ("add", video, cache)
+                    neighbors.append((new_state, change))
                     total_combinations += 1
         
-        # Stop if we've reached the maximum number of neighbors to generate
         if total_combinations >= max_neighbors:
             break
-    
+
     return neighbors
 
 

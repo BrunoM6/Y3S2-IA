@@ -44,7 +44,6 @@ def tabu_search(initial_solution: dict, video_size: list, endpoint_data_descript
         csv_writer = csv.writer(csvfile)
         if(not os.path.exists(folder_path_scores)):
             csv_writer.writerow(["algorithm", "solution_id", "score"])
-        prev_solution = {} 
         while iteration < max_iterations and iterations_without_improvement < iteration_without_improvement:  
             iteration += 1
             # print(iterations_without_improvement)
@@ -60,16 +59,14 @@ def tabu_search(initial_solution: dict, video_size: list, endpoint_data_descript
             if(get_all):
                 # **Step 1: Generate all neighbors**
                 neighbors = get_neighbors_all(best, video_size,  cache_capacity,max_neighbors)
-                for neighbor in neighbors:
-                    # prev_solution = update_plot(best, neighbor, solution_positions, ax, fig, prev_solution)
-                    neighbor_score = score(neighbor, endpoint_data_description, endpoint_cache_description, request_description)
+                for neighbor,change in neighbors:
+                    neighbor_score = score(neighbor, endpoint_data_description, endpoint_cache_description, request_description,change)
                     candidate_list.append((neighbor, neighbor_score))
             else:
                 # **Step 1: Generate all neighbors**
                 neighbors = get_neighbors(best, video_size,  cache_capacity)
-                for neighbor in neighbors:
-                    # prev_solution = update_plot(best, neighbor, solution_positions, ax, fig, prev_solution)
-                    neighbor_score = score(neighbor, endpoint_data_description, endpoint_cache_description, request_description)
+                for neighbor ,change in neighbors:
+                    neighbor_score = score(neighbor, endpoint_data_description, endpoint_cache_description, request_description,change)
                     candidate_list.append((neighbor, neighbor_score))
             # **Step 2: Choose the best candidate**
             for candidate, candidate_score in candidate_list:

@@ -42,7 +42,7 @@ def print_algorithms(dataset: str):
   print("4 - Hill Climb")
   print("5 - Quit")
 
-def print_annealing_parameters(max_iterations: int, iterations_without_improvement_cap: int, initial_temperature: int, cooling_rate: float, minimum_temperature: float, neighbors_generated: int):
+def print_annealing_parameters(max_iterations: int, iterations_without_improvement_cap: int, initial_temperature: int, cooling_rate: float, minimum_temperature: float, neighbors_generated: int,show_plot:bool):
   print("Change any parameter")
   print(f"1 - Max Iterations (current: {max_iterations})")
   print(f"2 - Iterations without improvement cap (current: {iterations_without_improvement_cap})")
@@ -50,7 +50,8 @@ def print_annealing_parameters(max_iterations: int, iterations_without_improveme
   print(f"4 - Cooling Rate (current: {cooling_rate})")
   print(f"5 - Minimum Temperature (current: {minimum_temperature})")
   print(f"6 - Generated Neighbors in each iteration (current: {neighbors_generated})")
-  print("7 - Resume")
+  print(f"7 - Show plot (current: {show_plot})")
+  print("8 - Resume")
 
 def print_genetic_parameters(generations: int, mutation_rate: float, tournament_size: int, population_size: int):
   print("Change any parameter")
@@ -123,10 +124,11 @@ while True:
             cooling_rate=0.995
             minimum_temperature=1e-4
             neighbors_generated = 5
+            show_plots = False
 
             parameter_command = 0
-            while parameter_command != 7:
-              print_annealing_parameters(max_iterations, iterations_without_improvement_cap, initial_temperature, cooling_rate, minimum_temperature, neighbors_generated)
+            while parameter_command != 8:
+              print_annealing_parameters(max_iterations, iterations_without_improvement_cap, initial_temperature, cooling_rate, minimum_temperature, neighbors_generated,show_plots)
               parameter_command = int(input("Action:"))
               match parameter_command:
                 case 1:
@@ -141,6 +143,8 @@ while True:
                   minimum_temperature = float(input("What is the new value you want to set?"))
                 case 6:
                   neighbors_generated = int(input("What is the new value you want to set?"))
+                case 7:
+                  show_plot = bool(input("Choose true to show plots: "))
 
             # get the correct starting position depending on flag
             starting_position = {}
@@ -157,17 +161,19 @@ while True:
             elif start_position_flag == 2:
               starting_position = random_start(problem_description, video_size)
 
-            fig, ax = plt.subplots()
-            ax.set_xlabel("iteration")
-            ax.set_ylabel("score")
-            ax.set_title("Simulated Annealing Solution Mapping")
-            solution = simulated_annealing(starting_position, video_size, endpoint_data_description, 
-                                endpoint_cache_description, request_description, problem_description[4], dataset, ax, fig, 
-                                max_iterations, initial_temperature, cooling_rate, neighbors_generated)
-          
-            fig.canvas.draw()
-            plt.show(block=True)
-            plt.close("all")
+            if show_plots:
+                fig, ax = plt.subplots()
+                ax.set_xlabel("iteration")
+                ax.set_ylabel("score")
+                ax.set_title("Simulated Annealing Solution Mapping")
+                solution = simulated_annealing(starting_position, video_size, endpoint_data_description, endpoint_cache_description, request_description, problem_description[4], dataset,show_plots, max_iterations, iterations_without_improvement_cap,initial_temperature, cooling_rate, minimum_temperature,neighbors_generated, ax, fig)
+              
+                fig.canvas.draw()
+                plt.show(block=True)
+                plt.close("all")
+            else:
+                solution = simulated_annealing(starting_position, video_size, endpoint_data_description, endpoint_cache_description, request_description, problem_description[4], dataset,show_plots, max_iterations, iterations_without_improvement_cap,initial_temperature, cooling_rate, minimum_temperature,neighbors_generated)
+                                
           # genetic, with parameter control
           case 2:
             generations=1000
