@@ -42,7 +42,7 @@ def print_algorithms(dataset: str):
   print("4 - Hill Climb")
   print("5 - Quit")
 
-def print_annealing_parameters(max_iterations: int, iterations_without_improvement_cap: int, initial_temperature: int, cooling_rate: float, minimum_temperature: float, neighbors_generated: int,show_plot:bool):
+def print_annealing_parameters(max_iterations: int, iterations_without_improvement_cap: int, initial_temperature: int, cooling_rate: float, minimum_temperature: float, neighbors_generated: int,show_plot:bool,get_all_neighbors:bool):
   print("Change any parameter")
   print(f"1 - Max Iterations (current: {max_iterations})")
   print(f"2 - Iterations without improvement cap (current: {iterations_without_improvement_cap})")
@@ -51,7 +51,8 @@ def print_annealing_parameters(max_iterations: int, iterations_without_improveme
   print(f"5 - Minimum Temperature (current: {minimum_temperature})")
   print(f"6 - Generated Neighbors in each iteration (current: {neighbors_generated})")
   print(f"7 - Show plot (current: {show_plot})")
-  print("8 - Resume")
+  print(f"8 - Search All Neighbors (current: {get_all_neighbors})")
+  print("9 - Resume")
 
 def print_genetic_parameters(generations: int, mutation_rate: float, tournament_size: int, population_size: int):
   print("Change any parameter")
@@ -72,12 +73,13 @@ def print_tabu(neighbors_generated_all:bool, max_iterations: int, tabu_tenure: i
   print(f"6 - Show plots (current: {plot})")
   print("7 - Resume")
 
-def print_hillclimb( max_iterations: int, max_neighbors: int,show_plot:bool):
+def print_hillclimb( max_iterations: int, max_neighbors: int,show_plot:bool,neighbors_generated_all:bool):
   print("Change any parameter")
   print(f"1 - Max Iterations (current: {max_iterations})")
   print(f"2 - Max_neighbors (current: {max_neighbors})")
   print(f"3 - Show plots (current: {show_plot})")
-  print("4 - Resume")
+  print(f"4 - Generate all neighbors (current: {neighbors_generated_all})")
+  print("5 - Resume")
 
 datasets = {1: 'kittens.in.txt', 2: 'me_at_the_zoo.in', 3: 'trending_today.in', 4: 'videos_worth_spreading.in'}
 dataset = 'me_at_the_zoo.in'
@@ -125,10 +127,11 @@ while True:
             minimum_temperature=1e-4
             neighbors_generated = 5
             show_plots = False
+            get_all_neighbors = False
 
             parameter_command = 0
-            while parameter_command != 8:
-              print_annealing_parameters(max_iterations, iterations_without_improvement_cap, initial_temperature, cooling_rate, minimum_temperature, neighbors_generated,show_plots)
+            while parameter_command != 9:
+              print_annealing_parameters(max_iterations, iterations_without_improvement_cap, initial_temperature, cooling_rate, minimum_temperature, neighbors_generated,show_plots,get_all_neighbors)
               parameter_command = int(input("Action:"))
               match parameter_command:
                 case 1:
@@ -144,7 +147,21 @@ while True:
                 case 6:
                   neighbors_generated = int(input("What is the new value you want to set?"))
                 case 7:
-                  show_plot = bool(input("Choose true to show plots: "))
+                  user_input = input("Write true or false: ").strip().lower()
+                  if user_input == "true":
+                    show_plot = True
+                  elif user_input == "false":
+                    show_plot = False
+                  else:
+                    print("Invalid input, please enter 'true' or 'false'.")
+                case 8:
+                  user_input = input("Write true or false: ").strip().lower()
+                  if user_input == "true":
+                    get_all_neighbors = True
+                  elif user_input == "false":
+                    get_all_neighbors = False
+                  else:
+                    print("Invalid input, please enter 'true' or 'false'.")
 
             # get the correct starting position depending on flag
             starting_position = {}
@@ -166,13 +183,13 @@ while True:
                 ax.set_xlabel("iteration")
                 ax.set_ylabel("score")
                 ax.set_title("Simulated Annealing Solution Mapping")
-                solution = simulated_annealing(starting_position, video_size, endpoint_data_description, endpoint_cache_description, request_description, problem_description[4], dataset,show_plots, max_iterations, iterations_without_improvement_cap,initial_temperature, cooling_rate, minimum_temperature,neighbors_generated, ax, fig)
+                solution = simulated_annealing(starting_position, video_size, endpoint_data_description, endpoint_cache_description, request_description, problem_description[4], dataset,show_plots,get_all_neighbors, max_iterations, iterations_without_improvement_cap,initial_temperature, cooling_rate, minimum_temperature,neighbors_generated, ax, fig)
               
                 fig.canvas.draw()
                 plt.show(block=True)
                 plt.close("all")
             else:
-                solution = simulated_annealing(starting_position, video_size, endpoint_data_description, endpoint_cache_description, request_description, problem_description[4], dataset,show_plots, max_iterations, iterations_without_improvement_cap,initial_temperature, cooling_rate, minimum_temperature,neighbors_generated)
+                solution = simulated_annealing(starting_position, video_size, endpoint_data_description, endpoint_cache_description, request_description, problem_description[4], dataset,show_plots,get_all_neighbors, max_iterations, iterations_without_improvement_cap,initial_temperature, cooling_rate, minimum_temperature,neighbors_generated)
                                 
           # genetic, with parameter control
           case 2:
@@ -310,9 +327,10 @@ while True:
             max_iterations = 1000
             max_neighbors = 500
             show_plot = False
+            gen_all = False
 
-            while parameter_command != 4:
-                print_hillclimb( max_iterations, max_neighbors,show_plot)
+            while parameter_command != 5:
+                print_hillclimb( max_iterations, max_neighbors,show_plot,gen_all)
                 parameter_command = int(input("Action:"))
                 
                 match parameter_command:
@@ -326,6 +344,14 @@ while True:
                             show_plot = True
                         elif user_input == "false":
                             show_plot = False
+                        else:
+                            print("Invalid input, please enter 'true' or 'false'.")
+                    case 4:
+                        user_input = input("Write true or false: ").strip().lower()
+                        if user_input == "true":
+                            gen_all = True
+                        elif user_input == "false":
+                            gen_all = False
                         else:
                             print("Invalid input, please enter 'true' or 'false'.")
             if start_position_flag == 1:
@@ -348,11 +374,11 @@ while True:
                 ax.set_xlabel("X")
                 ax.set_ylabel("Y")
                 ax.set_title("Hill Climbing Solution Mapping")
-                solution = hill_climb( starting_position, video_size, endpoint_data_description, endpoint_cache_description, request_description, problem_description[4], dataset, max_iterations, max_neighbors, show_plot, ax, fig)
+                solution = hill_climb( starting_position, video_size, endpoint_data_description, endpoint_cache_description, request_description, problem_description[4], dataset,gen_all, max_iterations, max_neighbors, show_plot, ax, fig)
                 fig.canvas.draw()
                 plt.show(block=True)
                 plt.close("all")
-            solution = hill_climb( starting_position, video_size, endpoint_data_description, endpoint_cache_description, request_description, problem_description[4], dataset, max_iterations, max_neighbors, show_plot)
+            solution = hill_climb( starting_position, video_size, endpoint_data_description, endpoint_cache_description, request_description, problem_description[4], dataset,gen_all, max_iterations, max_neighbors, show_plot)
           case 5: break
     case 4:
       break

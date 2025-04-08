@@ -3,12 +3,12 @@ import json
 import os
 import re
 
-from get_neighbours import get_optimized_neighbors
+from get_neighbours import get_neighbors_all,get_neighbors
 from score_functions import score
 from visual import update_plot_batch, update_score
 
 
-def hill_climb(initial_solution: dict, video_size: list, endpoint_data_description: list, endpoint_cache_description: dict, request_description: dict, cache_capacity: int, dataset: str,max_iterations, neighbors_generated,show_plot, ax=None, fig=None):
+def hill_climb(initial_solution: dict, video_size: list, endpoint_data_description: list, endpoint_cache_description: dict, request_description: dict, cache_capacity: int, dataset: str,get_all:bool,max_iterations, neighbors_generated,show_plot, ax=None, fig=None):
     # initialize the directories for results
     dataset_path_scores = os.path.join("scores", dataset)
     os.makedirs(dataset_path_scores, exist_ok=True)
@@ -27,7 +27,12 @@ def hill_climb(initial_solution: dict, video_size: list, endpoint_data_descripti
     
     # initialize the solutions and scores 
     current_solution = initial_solution
-    current_score = score(initial_solution, endpoint_data_description, endpoint_cache_description, request_description)
+    current_score, best_latencies = score(
+        initial_solution,
+        endpoint_data_description,
+        endpoint_cache_description,
+        request_description
+    )
 
     print(f"Starting score for this Hill Climbing instance is {current_score}")
 
@@ -47,17 +52,34 @@ def hill_climb(initial_solution: dict, video_size: list, endpoint_data_descripti
         
         for iteration in range(1, max_iterations + 1):          
             # optimized neighbor getting heuristic
-            neighbors = get_optimized_neighbors(current_solution, video_size, cache_capacity, neighbors_generated)
+            if get_all:
+                neighbors = get_neighbors_all(current_solution, video_size, cache_capacity, neighbors_generated)
+            else:
+                neighbors = get_neighbors(current_solution, video_size, cache_capacity)
+            if not neighbors:
+                continue
             if not neighbors:
                 break
             
             # pick the best neighbor
             best_neighbor_score = 0
+            best_neighbor = None
+            best_neighbor_latencies = None
             for neighbor, change in neighbors:
-                new_score = score(neighbor, endpoint_data_description, endpoint_cache_description, request_description, current_solution, current_score, change)
+                new_score, new_latencies = score(
+                    neighbor,
+                    endpoint_data_description,
+                    endpoint_cache_description,
+                    request_description,
+                    current_solution,
+                    current_score,
+                    change,
+                    best_latencies
+                )
                 if new_score > best_neighbor_score:
                     best_neighbor = neighbor
                     best_neighbor_score = new_score
+                    best_neighbor_latencies = new_latencies
             
             # get the delta and act accordingly
             delta_score = best_neighbor_score - current_score
@@ -66,6 +88,7 @@ def hill_climb(initial_solution: dict, video_size: list, endpoint_data_descripti
             else:
                 current_solution = best_neighbor
                 current_score = best_neighbor_score
+                best_latencies = best_neighbor_latencies
 
 
             # log the state
