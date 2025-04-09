@@ -6,30 +6,24 @@ import os
 from get_solutions import convert_keys_to_int
 from parse import parse_results
 from greedy import greedy_start
-from get_neighbours import get_neighbors
+from get_neighbours import get_neighbors_all
 from random_start import random_start
 
 
 
 def mutate_solution(solution, video_size, problem_description, mutation_rate=0.2):
-    """Apply small mutations to greedy."""
-    new_solution = copy.deepcopy(solution)
- 
-    for cache_id in new_solution:
-        if random.random() < mutation_rate and new_solution[cache_id]:  
-            # Remove random video
-            removed_video = random.choice(new_solution[cache_id])
-            new_solution[cache_id].remove(removed_video)
- 
-            # Check current cache load
-            current_load = sum(video_size[v] for v in new_solution[cache_id])
- 
-            # Try adding new video (if it fits, else ignore)
-            new_video = random.randint(0, len(video_size) - 1)
-            if new_video not in new_solution[cache_id] and (current_load + video_size[new_video] <= problem_description[4]):
-                 new_solution[cache_id].append(new_video)
- 
-    return new_solution
+    """Mutate a solution by picking a random neighbor from get_neighbors_all based on mutation_rate."""
+    if random.random() > mutation_rate:
+        return copy.deepcopy(solution)  
+
+    cache_capacity = problem_description[4]
+    neighbors = get_neighbors_all(solution, video_size, cache_capacity, max_neighbors=50)
+
+    if neighbors:
+        mutated_solution, _ = random.choice(neighbors)
+        return mutated_solution
+    else:
+        return copy.deepcopy(solution)  # fallback if no neighbors generated
 
 def import_existent(file, video_size, problem_description):
     csv_path = "genetic/genetic.csv"

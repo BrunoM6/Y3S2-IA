@@ -72,7 +72,7 @@ The genetic algorithm starts out by generating a population whose size is determ
 
 - **Greedy Approach**: one third of the solutions in the population are the greedy ones calculated using the greedy heuristic in `greedy.py`;
 
-- **Mutated Greedy**: another third of the solutions are mutated versions of greedy. The *mutate_solution* method present in `population.py` uses a random pick from the solution list provided by the *get_neighbors* method from `get_neighbours.py`and is also used to mutate offspring after crossover;
+- **Mutated Greedy**: another third of the solutions are mutated versions of greedy. The *mutate_solution* method present in `population.py` uses a random pick from the solution list provided by the *get_neighbors_all* method from `get_neighbours.py`and is also used to mutate offspring after crossover;
 
 - **Random Pick**: the last third of the population can either be completely random solutions to fill out the remainder of the space or, in case the genetic algorithm was run previously, solutions will be randomly picked from `genetic\genetic.csv` (leads to a better starting point than greedy usually)
 
