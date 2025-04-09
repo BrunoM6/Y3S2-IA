@@ -240,7 +240,7 @@ while True:
             solution = genetic_algorithm(
               population, 
               generations, 
-              lambda solution: score(solution, endpoint_data_description, endpoint_cache_description, request_description),
+              lambda solution: score(solution,endpoint_data_description,endpoint_cache_description,request_description)[0],
               video_size,
               problem_description,
               dataset,
